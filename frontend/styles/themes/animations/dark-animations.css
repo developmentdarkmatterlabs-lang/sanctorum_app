@@ -1,0 +1,22 @@
+/* Marquee for the top-bar ticker. */
+@keyframes office-tick {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.office-ticker {
+  animation: office-tick 26s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .office-ticker {
+    animation: none;
+    padding-left: 0;
+  }
+
+  /* The dossier still opens and closes — it just stops sliding. */
+  .office-panel {
+    transition: none;
+  }
+}

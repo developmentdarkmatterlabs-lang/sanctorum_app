@@ -1,0 +1,85 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Workspace-wide rules only — frontend/ and backend/ carry their own.
+
+# dependencies
+node_modules/
+/.pnp
+.pnp.*
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!**/.env.local.example
+
+# editors
+.vscode/
+.idea/
+
+# AI service — LangGraph checkpoints (conversation state, not secrets, but 5MB binary)
+aiservice/**/*.db
+aiservice/**/*.db-shm
+aiservice/**/*.db-wal
+
+# Database backups of any extension
+backend/database/dev.db.*
+backend/database/app.db.*
+
+# Agent-produced files
+backend/agent-workspaces/**/*
+!backend/agent-workspaces/**/.gitkeep
+
+# Electron main/preload, compiled by tsc -p electron
+dist-electron/
+
+# Next.js static export, built for the app:// protocol
+frontend/out/
+
+# electron-builder output
+release/
+
+# PyInstaller intermediate build
+aiservice/build/
+
+# PyInstaller bundle (~145 MB) — rebuild with npm run build:aiservice
+aiservice/dist/
+
+# Uploaded agent art (portraits/sprites added through the dossier form). These
+# live in the backend's data directory, are per-install, and can be large.
+backend/uploads/**/*
+!backend/uploads/**/.gitkeep
+frontend/public/uploads/**/*
+!frontend/public/uploads/**/.gitkeep
+
+# Sprite-sheet authoring inputs — the full-resolution art a 192x192 sheet was cut
+# from. Keep them locally if you want to recut; they are not needed to run.
+frontend/public/assets/character/**/source/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+aiservice/.build_env/
+
+# Test/scratch artifacts
+*.log
+coverage/
+.pytest_cache/
+
+# Shipped database — BUILD OUTPUT, regenerate with `npm run seed:db`
+backend/database/seed.db
+
+# Local development scaffolding — skills, notes and the scaffold docs the app
+# was built from. Useful while working, not part of what ships.
+.claude/
+4_LangGraph/
+4Electron.md
+5RootFiles.md

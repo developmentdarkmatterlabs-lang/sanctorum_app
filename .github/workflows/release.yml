@@ -1,0 +1,144 @@
+# Builds Sanctorum for Windows and both macOS architectures, and attaches the
+# installers to a GitHub Release.
+#
+# WHY THREE JOBS AND NOT ONE. Two of the three things this app ships are NATIVE
+# binaries: the AI service is a PyInstaller bundle and Prisma's query engine is
+# compiled per platform. Neither cross-compiles. A single runner would therefore
+# produce packages that install and then fail to start their own AI service — a
+# failure that only appears on a user's machine.
+#
+#   windows-latest   x64     Sanctorum-Setup-<v>.exe
+#   macos-latest     arm64   Sanctorum-<v>-arm64.dmg      (M1-M5)
+#   macos-13         x64     Sanctorum-<v>-x64.dmg        (Intel)
+#
+# Windows ARM64 is deliberately absent: x64 runs under emulation there, and
+# adding it would mean a third PyInstaller path for a small slice of users.
+#
+# SIGNING NEEDS NO CHANGE HERE. electron-builder reads CSC_LINK,
+# CSC_KEY_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID
+# from the environment. Add them as repository secrets and the same workflow
+# starts producing signed, notarized builds.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  # Lets you build without tagging, to prove a change before cutting a release.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    # One job's failure must not discard the others: a green Windows build is
+    # still worth having while a macOS one is being fixed.
+    continue-on-error: false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows x64
+            script: dist:win
+            artifacts: release/*.exe
+          - os: macos-latest
+            label: macOS Apple Silicon
+            script: dist:mac
+            artifacts: release/*.dmg
+          - os: macos-13
+            label: macOS Intel
+            script: dist:mac
+            artifacts: release/*.dmg
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Matches the version this project is developed against.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # 3.12 rather than "latest": PyInstaller and the ML dependency tree are
+      # sensitive to the interpreter, and this is the version the bundle is
+      # known to freeze cleanly on.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: astral-sh/setup-uv@v3
+
+      # Installs root, backend, frontend and the Python venv. Each platform gets
+      # its OWN native modules from this step — that is the whole point of
+      # building on the target OS.
+      - name: Install dependencies
+        run: npm run install:all
+
+      # EXPLICIT, not left to @prisma/client's postinstall. That hook is skipped
+      # often enough — a warm npm cache, a lockfile that resolves without
+      # re-running scripts — and when it is, `tsc` fails with ~40 confusing
+      # "implicitly has an 'any' type" errors rather than "client not generated".
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      # Backend, frontend, electron, PyInstaller, then the seeded database, then
+      # the installer. The npm scripts already chain all of it.
+      - name: Build and package
+        run: npm run ${{ matrix.script }}
+        env:
+          # A build without a certificate must not fail; it produces an unsigned
+          # package, which is what we ship until the Developer ID is in place.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanctorum-${{ matrix.os }}
+          path: ${{ matrix.artifacts }}
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    # Only a tag becomes a Release. A manual run still leaves downloadable
+    # artifacts on the workflow page.
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+          draft: true
+          generate_release_notes: true
+          body: |
+            ## Downloads
+
+            | Platform | File |
+            |---|---|
+            | Windows 10/11 (x64) | `Sanctorum-Setup-*.exe` |
+            | macOS Apple Silicon (M1–M5) | `Sanctorum-*-arm64.dmg` |
+            | macOS Intel | `Sanctorum-*-x64.dmg` |
+
+            ### These builds are unsigned
+
+            **Windows** — SmartScreen will warn about an unknown publisher.
+            Choose *More info* then *Run anyway*.
+
+            **macOS** — Gatekeeper refuses unsigned apps outright. After dragging
+            Sanctorum to Applications:
+
+            ```
+            xattr -cr /Applications/Sanctorum.app
+            ```
+
+            Requires macOS 10.15 or later.

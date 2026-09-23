@@ -1,0 +1,8 @@
+# Normalise line endings so a Windows checkout and a CI Linux build agree.
+* text=auto eol=lf
+
+# Binary assets — never diffed, never line-ending mangled.
+*.png binary
+*.jpg binary
+*.ico binary
+*.db  binary

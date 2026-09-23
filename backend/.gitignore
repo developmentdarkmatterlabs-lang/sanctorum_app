@@ -1,0 +1,32 @@
+node_modules/
+dist/
+
+# Local database and generated artifacts.
+# NOTE the `dev.db.*` line: `database/*.db` does NOT match a file whose name
+# merely CONTAINS .db (e.g. `dev.db.bak-...`), so hand-made backups
+# would otherwise be committed — along with whatever was in AppSettings when
+# they were taken.
+database/*.db
+database/*.db-journal
+database/*.db-shm
+database/*.db-wal
+database/dev.db.*
+database/app.db.*
+database/*.backup*
+database/knowledgeGraph/*.db
+
+# Secrets. The root .gitignore covers `.env*`; these are belt-and-braces for
+# the two that carry real credentials.
+.env
+.env.user
+.encryption-key
+
+# Uploaded media
+uploads/**/*
+!uploads/**/.gitkeep
+
+# Agent workspaces — the sandbox agents actually write into. Whatever a run
+# produces (drafts, notes, generated code) lands here, so it is deliberately
+# NOT source. Keep the directory itself so a fresh clone has somewhere to run.
+agent-workspaces/**/*
+!agent-workspaces/**/.gitkeep

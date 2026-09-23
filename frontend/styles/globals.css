@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@import "./fonts.css";
+@import "./themes/tokens.css";
+@import "./themes/presets/light.css";
+@import "./themes/presets/dark.css";
+@import "./themes/animations/dark-animations.css";
+@import "./themes/base/reset.css";
+
+@theme inline {
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-content-primary: var(--content-primary);
+  --color-content-secondary: var(--content-secondary);
+  --font-mono: var(--font-mono);
+  --font-sans: var(--font-sans);
+}
+
+/* Native <select> dropdown lists are painted by the OS, not the page, so an
+   unstyled <option> ignores the theme entirely — a dark app shows a white
+   dropdown. These two rules are the only way to reach them from CSS.
+   `color-scheme` tells the browser which native palette to use for the popup
+   chrome; the explicit option colours cover the rows themselves. */
+select {
+  color-scheme: light dark;
+}
+
+select option {
+  background-color: var(--surface-secondary);
+  color: var(--content-primary);
+}
+
+select option:checked,
+select option:hover {
+  background-color: var(--surface-tertiary);
+  color: var(--content-primary);
+}

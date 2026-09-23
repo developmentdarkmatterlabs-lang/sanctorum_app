@@ -1,0 +1,12 @@
+-- Per-agent cost ceiling, for the agent's OWN DELEGATION SUBTREE.
+--
+-- The existing ceiling (AppSettings.maxCostPerTree, snapshotted onto
+-- Run.maxCost) governs a whole task no matter how wide it fans out. This column
+-- adds a SECOND, tighter bound: what one agent plus everything it delegates may
+-- spend. Both apply, and the lower one binds — a department's budget nested
+-- inside the company's, which is what a budget means in an organisation.
+--
+-- Nullable on purpose. NULL = inherit the global ceiling, the same cascade
+-- `Agent.model` and `Agent.imageModel` already use, so every existing row keeps
+-- working untouched.
+ALTER TABLE "Agent" ADD COLUMN "maxCost" REAL;

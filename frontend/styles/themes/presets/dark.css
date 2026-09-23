@@ -1,0 +1,30 @@
+/* Palette carried over from the original pixel-office chrome.
+   Scoped to :root so it cannot outrank the light preset on cascade order —
+   both presets carry the same specificity, so each must match only its own
+   theme value. html.dark is qualified for the same reason. */
+:root[data-theme="dark"],
+html.dark:not([data-theme="light"]) {
+  --surface-primary: #191d24;
+  --surface-secondary: #12151a;
+  --surface-tertiary: #0d1014;
+
+  --content-primary: #d7dde6;
+  --content-secondary: #7b8494;
+  --content-tertiary: #4a5262;
+
+  --border-primary: #262c36;
+  --border-secondary: #1b2027;
+
+  --accent-primary: #f0a832;
+  --accent-secondary: #8a6420;
+  --accent-muted: #54431f;
+
+  --semantic-success: #5fd068;
+  --semantic-warning: #f0a832;
+  --semantic-error: #e05555;
+  --semantic-info: #57c7ff;
+  --semantic-success-muted: #2c4a30;
+  --semantic-warning-muted: #54431f;
+  --semantic-error-muted: #5a2a2a;
+  --semantic-info-muted: #274454;
+}

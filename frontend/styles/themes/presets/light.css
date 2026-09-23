@@ -1,0 +1,25 @@
+:root[data-theme="light"] {
+  --surface-primary: #ffffff;
+  --surface-secondary: #f5f5f5;
+  --surface-tertiary: #e5e5e5;
+
+  --content-primary: #171717;
+  --content-secondary: #525252;
+  --content-tertiary: #a3a3a3;
+
+  --border-primary: #d4d4d4;
+  --border-secondary: #e5e5e5;
+
+  --accent-primary: #b26a00;
+  --accent-secondary: #d98b1f;
+  --accent-muted: #f0d5a8;
+
+  --semantic-success: #16a34a;
+  --semantic-warning: #d97706;
+  --semantic-error: #dc2626;
+  --semantic-info: #2563eb;
+  --semantic-success-muted: #bbf7d0;
+  --semantic-warning-muted: #fde68a;
+  --semantic-error-muted: #fecaca;
+  --semantic-info-muted: #bfdbfe;
+}

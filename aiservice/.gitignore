@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Secrets — the real OpenRouter/Serper keys live here. Only .env.example is committed.
+.env
+.env.*
+!.env.example
+
+# LangGraph checkpointer (graph/checkpoint.py). Holds every paused run's full
+# message state plus its RunSpec manifest — conversation content, not secrets,
+# but it is a multi-megabyte binary that regenerates itself and must never be
+# committed. The -shm/-wal siblings are SQLite's WAL journal.
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/

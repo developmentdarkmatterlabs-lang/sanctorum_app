@@ -1,0 +1,309 @@
+# ============================================================================
+# electron-builder — Sanctorum desktop packaging
+# ============================================================================
+# Build command:  npx electron-builder --win    (Windows)
+#                 npx electron-builder --mac    (macOS)
+#                 npx electron-builder --linux  (Linux)
+#                 npx electron-builder --dir    (unpacked, for inspection)
+#
+# Those invoke electron-builder ALONE and assume the three build outputs already
+# exist (dist-electron/, frontend/out/, backend/dist/). The npm scripts build
+# them first, which is what you normally want:
+#
+#   npm run pack        build everything, then --dir
+#   npm run dist:win    build everything, then --win
+#   npm run dist:mac    build everything, then --mac
+#
+# STATUS: verified. A packed build runs end to end - the database is created
+# from seed.db, migrations report nothing pending, both services start, and a
+# supervised run with tool approval and image generation completes.
+#
+# The AI service is packaged from aiservice/aiservice.spec (verified running
+# frozen), and the database is created, migrated and seeded on first launch by
+# electron/database.ts. Build the AI bundle before packaging — see
+# extraResources below.
+# ============================================================================
+
+appId: com.sanctorum.app
+productName: Sanctorum
+copyright: Copyright © 2026 Sanctorum
+
+# Never auto-publish. A local `npm run dist:mac` should write to release/ and
+# stop; the CI workflow attaches the files to a Release itself.
+publish: null
+
+directories:
+  output: release
+
+# ----------------------------------------------------------------------------
+# What goes into the bundle
+# ----------------------------------------------------------------------------
+# Everything not listed is excluded. Note what is ABSENT on purpose: no
+# frontend/ source (only its static export), no aiservice/, no backend/*.ts.
+files:
+  - dist-electron/**/*
+
+  # The Next.js static export, served over app://
+  - frontend/out/**/*
+
+  # The backend runs from compiled JS. It needs its deps and its Prisma schema
+  # (read as a real file at runtime), but none of its TypeScript — that compiles
+  # into backend/dist, already packaged above.
+  - backend/dist/**/*
+  - backend/package.json
+  - backend/prisma/**/*
+
+  # THE SHIPPED DATABASE — seed.db, and ONLY seed.db.
+  #
+  # BUILD OUTPUT, not a file anyone maintains: `npm run seed:db` regenerates it
+  # from the migrations plus the seed script, and the packaging scripts run that
+  # first. It is gitignored.
+  #
+  # Deliberately NOT dev.db. That is the DEVELOPMENT database — the same file you
+  # talk to agents in — so it accumulates threads, messages, run history and
+  # memory. Shipping it would hand every user a copy of this machine's
+  # conversations, and the failure is silent: the app works, it just arrives full
+  # of someone else's data. buildSeedDb.js enforces the difference with a size
+  # ceiling and a row-count check.
+  #
+  # Ordering matters: electron-builder takes the LAST matching pattern, so the
+  # negations strip every database (seed.db included) and the final line adds back
+  # the one we want. Remove that line and no database ships at all. Quotes are
+  # required — a bare `!` is a YAML tag.
+  #
+  # Two negation globs because the first does not cross directory boundaries.
+  - "!backend/database/*.db"
+  - "!backend/database/**/*.db"
+  - "!backend/database/*.db-journal"
+  - "!backend/database/*.db-wal"
+  - "!backend/database/*.db-shm"
+  - "!backend/database/*.bak-*"
+  - "!backend/database/*.keep-*"
+  - "!backend/database/*copy*"
+  - backend/database/seed.db
+
+  # Workspaces are per-install user data, never bundled.
+  - "!backend/agent-workspaces/**/*"
+  - "!backend/uploads/**/*"
+
+  # Icons — main.ts reads icon.ico from here at window creation.
+  - electron/assets/**/*
+
+  # Electron reads "main" from here.
+  - package.json
+
+# ----------------------------------------------------------------------------
+# Extra resources (unpacked, beside app.asar)
+# ----------------------------------------------------------------------------
+extraResources:
+  # THE BACKEND'S DEPENDENCIES, copied verbatim.
+  #
+  # These cannot live in `files`. electron-builder prunes node_modules against
+  # the ROOT package.json's `dependencies`, which is empty here because every
+  # package belongs to a workspace - so its default ignore strips EVERY
+  # node_modules directory before our patterns are consulted. A plain
+  # `backend/node_modules/**/*` silently matched nothing and the packaged app
+  # shipped with no Prisma, no Express and no query engine. The symptom was
+  # 'prisma not found at .../backend/node_modules/prisma/build/index.js' on first
+  # launch, AFTER the database had been copied - a failure that exists only in a
+  # packaged build.
+  #
+  # extraResources is copied as-is, with no pruning and no asar, which is also
+  # what Prisma's native query engine needs: the OS must exec it from a real path.
+  - from: backend/node_modules
+    to: backend/node_modules
+    filter:
+      - "**/*"
+      - "!**/*.map"
+      - "!**/test/**"
+      - "!**/tests/**"
+
+  # The PyInstaller-built AI service (~145 MB). Outside the asar because it is a
+  # native executable the OS must exec directly.
+  #
+  # Build it first — this path does not exist in a fresh checkout:
+  #     cd aiservice && uv run pyinstaller aiservice.spec --noconfirm
+  #
+  # main.ts spawns resources/aiservice/aiservice.exe in packaged mode and logs a
+  # named error if it is absent, rather than failing silently at run time.
+  - from: aiservice/dist/aiservice
+    to: aiservice
+    filter:
+      - "**/*"
+
+  # Character art the seed references by path. `source/` (the 1254px originals,
+  # ~13 MB) is excluded — those are authoring inputs, not runtime assets.
+  - from: frontend/public/assets/character
+    to: character
+    filter:
+      - "**/*.png"
+      - "!source/**"
+
+# ----------------------------------------------------------------------------
+# Windows
+# ----------------------------------------------------------------------------
+
+afterPack: ./afterPack.js
+
+win:
+  target:
+    # NSIS is what a stranger should get: a real installer with shortcuts, an
+    # Add/Remove Programs entry and an uninstaller. A zip leaves them to find
+    # Sanctorum.exe inside ~350 MB of unpacked files.
+    - target: nsis
+      arch:
+        - x64
+
+    # THE ZIP IS COMMENTED OUT BECAUSE OF CI, NOT BECAUSE IT IS USELESS.
+    #
+    # Measured on a GitHub windows-latest runner: everything up to and including
+    # NSIS took about two minutes, and `target=zip` then ran for 74+ minutes
+    # without finishing. The same step locally is minutes, even on a much larger
+    # app — so this is the runner's virtualised disk (cold cache, Defender with
+    # no exclusions) meeting zip's per-file compression over a node_modules tree.
+    #
+    # Uncomment when you want a zip locally; the installer is what anyone
+    # actually downloads.
+    # - target: zip
+    #   arch:
+    #     - x64
+  icon: electron/assets/icon.ico
+
+  # WINDOWS ONLY, deliberately not top-level.
+  #
+  # `compression` reaches two places for an NSIS build: the 7z pack of
+  # win-unpacked (NsisTarget -> archive, `-mx=0` vs `-mx=7`) and the installer
+  # script (`SetCompress off` vs `SetCompressor zlib`). The 7z pack over ~560 MB
+  # is what made this job take 30-45 minutes on a GitHub runner, against 3
+  # minutes for the same app on macOS.
+  #
+  # Scoped to `win:` because the SAME option picks the dmg format on macOS —
+  # `store` would switch UDZO (zlib) to UDRO (uncompressed), inflating two builds
+  # that already finish in three minutes. platformSpecificBuildOptions wins over
+  # the top-level value, so macOS is untouched.
+  #
+  # The trade is a LARGER installer. Worth it while the payload is this big and
+  # the runner this slow; revisit if the download size becomes the complaint.
+  compression: store
+
+  # signAndEditExecutable is deliberately NOT set to false.
+  #
+  # The name is misleading: that one flag gates BOTH code signing AND the
+  # rewrite of the executable's version resource. With it off, the binary ships
+  # Electron's own metadata — the taskbar tooltip reads "Electron", Task Manager
+  # lists it as Electron, and file properties credit GitHub, Inc.
+  #
+  # Leaving it unset lets app-builder-lib run rcedit, which writes
+  # FileDescription, ProductName, LegalCopyright and CompanyName (from `author`
+  # in package.json) and the version fields. rcedit runs BEFORE signing, and
+  # signing without a certificate returns false quietly rather than throwing —
+  # it only throws when forceCodeSigning is set, which we do not set. So this
+  # costs nothing while we remain unsigned.
+  #
+  # SmartScreen will still warn about an unknown publisher without a real
+  # certificate. Correct metadata is cosmetic plus a small antivirus benefit: a
+  # binary named Sanctorum.exe claiming to be GitHub's Electron is the sort of
+  # mismatch scanners notice.
+
+# ----------------------------------------------------------------------------
+# NSIS installer
+# ----------------------------------------------------------------------------
+
+nsis:
+  # A wizard, not a silent one-click install. For a ~350 MB app people reasonably
+  # want to know where it is going and to be able to choose.
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+  # Per-user, into %LOCALAPPDATA% - no UAC prompt. Deliberate: the build is
+  # unsigned, so SmartScreen already warns about an unknown publisher, and asking
+  # for admin rights on top of that makes an honest app look worse than it is.
+  perMachine: false
+
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Sanctorum
+  artifactName: ${productName}-Setup-${version}.${ext}
+
+  # The uninstaller deliberately LEAVES %APPDATA%/Sanctorum in place: that is
+  # where the user's own database lives - their org, memory and run history - and
+  # reinstalling should find that work intact. A clean-slate test therefore means
+  # deleting that folder by hand.
+  deleteAppDataOnUninstall: false
+
+# ----------------------------------------------------------------------------
+# macOS / Linux
+# ----------------------------------------------------------------------------
+
+mac:
+  # NO `arch` LIST — each CI runner builds only its own.
+  #
+  # Listing x64 and arm64 here makes electron-builder attempt both in one pass,
+  # and that silently produces a broken package: the Electron shell would cross-
+  # compile fine, but the AI service is a PyInstaller binary and Prisma's query
+  # engine is native, so an Apple Silicon runner would wrap an ARM aiservice in
+  # an "Intel" dmg. It installs, then cannot start its own AI service.
+  #
+  # Omitting arch makes `--mac` build for the host, which is why the workflow
+  # runs macos-latest (arm64) and macos-13 (x64) as separate jobs.
+  target:
+    - dmg
+  # A real multi-resolution .icns, generated from frontend/public/logo.jpg.
+  # electron-builder will convert a .png, but its conversion produces one size;
+  # this carries 11, including the @2x variants macOS wants on Retina displays,
+  # so nothing is ever upscaled.
+  icon: electron/assets/icon.icns
+  category: public.app-category.productivity
+
+  # Electron 33 needs 10.15+. Stating it means an older Mac refuses the install
+  # with a clear message instead of launching and crashing.
+  minimumSystemVersion: '10.15.0'
+
+  # Both architectures would otherwise produce `Sanctorum-0.1.0.dmg`: arm64 gets
+  # a suffix, x64 does not, so a Release would carry two files that look the
+  # same. Naming both explicitly removes the ambiguity.
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+linux:
+  target:
+    - AppImage
+  icon: electron/assets/icon.png
+  category: Development
+
+# ----------------------------------------------------------------------------
+# asar
+# ----------------------------------------------------------------------------
+# Code is packed into an archive for faster loading. Anything the OS must exec,
+# or that is opened as a real file rather than required, has to stay outside it.
+asar: true
+asarUnpack:
+  # NOTE: backend/node_modules is NOT listed here. It ships via extraResources
+  # (above), so it never enters the asar and needs no unpacking.
+  # Prisma's query engine: a native binary that cannot be exec'd from inside the
+  # archive.
+
+  # The Prisma CLI, for running `migrate deploy` against the user's database on
+  # first launch. Unpacked now so the bundle is ready when that startup step is
+  # written; it is inert until then.
+
+  # The schema and migration SQL the CLI reads. Prisma opens these as real
+  # files, so they cannot live inside the archive.
+  - backend/prisma/**/*
+
+  # The compiled backend, because electron/database.ts SPAWNS dist/prisma/seed.js
+  # as a child process on first launch. A script inside the asar cannot be
+  # spawned, only required — so the seed must be on the real filesystem.
+  - backend/dist/**/*
+
+  # The shipped database, copied out with fs.copyFileSync on first launch —
+  # which reads a real path, not a virtual one inside the archive.
+  - backend/database/seed.db

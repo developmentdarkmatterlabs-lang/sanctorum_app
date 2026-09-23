@@ -1,0 +1,605 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // env(), not a literal: a packaged app must open the database in the user's
+  // own data directory, because the app bundle is read-only. backend/.env sets
+  // this for development; Electron passes the userData path in production.
+  url      = env("DATABASE_URL")
+}
+
+// A floor of the building. Grids and props were a frontend constant; they now
+// live here so the room set can be edited at runtime. The portal pad is NOT
+// stored — it is a shared constant (bottom-centre) so the lift shaft lines up
+// on every floor.
+model Room {
+  id    String @id @default(cuid())
+  // Position in the building, top to bottom. Unique so ordering is stable.
+  order Int    @unique
+  name  String
+  // Background image: an /assets path for shipped floors, /api/uploads for
+  // uploaded ones.
+  bg    String
+  // Walkability grid, 20x20, 0 = walkable / 1 = blocked. JSON string:
+  // SQLite has no array type.
+  grid  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tiles Tile[]
+  props Prop[]
+  // A floor optionally hosts one team (the team's physical home). The FK lives
+  // on Team (Team.floorId), so this is the back-relation.
+  team  Team?
+}
+
+// An organizational unit — a real-world department/squad. A team has a name, a
+// mission, a set of positions (its roles/seats), and optionally a home floor.
+// Positions (not agents) own role-scoped memory and carry clearance, so an
+// agent reassigned to another team leaves that knowledge behind on the seat.
+model Team {
+  id      String  @id @default(cuid())
+  name    String
+  mission String  @default("")
+  // The team's home floor, if any. Unique: at most one team per floor. Null =
+  // a team with no physical space yet.
+  floorId String? @unique
+  floor   Room?   @relation(fields: [floorId], references: [id], onDelete: SetNull)
+
+  // The team this one reports into, if any. Null = a top-level team (today's
+  // behaviour for every existing team).
+  //
+  // This is what makes the org a TREE rather than a flat list of teams, and it
+  // is the ONLY thing that lets delegation cross a team boundary: a leader may
+  // delegate to the LEADER of a team whose parent is its own — downward, one
+  // level, never up and never sideways. Keeping the graph a strict tree is what
+  // keeps the escalation path acyclic (see delegationService.delegateTargets).
+  //
+  // SetNull, not Cascade: deleting a parent orphans its sub-teams up to the top
+  // level rather than deleting real teams and their seats with them.
+  parentTeamId String?
+  parentTeam   Team?   @relation("TeamHierarchy", fields: [parentTeamId], references: [id], onDelete: SetNull)
+  subTeams     Team[]  @relation("TeamHierarchy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  positions Position[]
+
+  @@index([floorId])
+  @@index([parentTeamId])
+}
+
+// A seat on a team — a role/position an agent checks out (e.g. "SWE Lead").
+// This is what owns role-memory and what clearance gates, NOT the agent: whoever
+// holds the position inherits its clearance and (later) its memory.
+model Position {
+  id                String  @id @default(cuid())
+  teamId            String
+  // The role (job) this seat is an instance of. Many seats can reference one role
+  // — three "Sales Representative" seats are one role, three headcount. The seat
+  // INHERITS the role's title/clearance unless it sets an explicit override below.
+  // Restrict: a role held by any seat cannot be deleted (enforced in the DB too).
+  roleId            String?
+  role              Role?   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  // Per-seat OVERRIDES. Null = inherit from the role. Set = a deliberate, visible
+  // exception (e.g. one senior seat on an otherwise standard role). Resolution
+  // lives in one place: positionResolve.effectivePosition().
+  titleOverride     String?
+  clearanceOverride Int?
+  // Exactly one leader per team (enforced in the service, not the schema).
+  isLeader          Boolean @default(false)
+  // Display order within the team.
+  order             Int     @default(0)
+
+  team   Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  // The agent currently holding this seat, if any (one-to-one via Agent.positionId).
+  agent  Agent?
+  // Skills granted to this seat (Phase 3.5). Whoever holds the position inherits
+  // them at run time — like clearance and memory, capability lives on the seat.
+  skills PositionSkill[]
+  // MCP servers granted to this seat (Phase 3.7). The seat's holder gets those
+  // servers' tools at run time, gated + supervised like every other tool.
+  mcps   PositionMcp[]
+
+  @@index([teamId])
+  @@index([roleId])
+}
+
+// A ROLE (Phase 3.9) — the job architecture. Defined ONCE in a central catalog
+// ("Sales Representative", "Staff Software Engineer") and referenced by many seats:
+// one role, N headcount. Seats INHERIT the role's title and defaultClearance live,
+// so changing the role moves every seat holding it — the professional model (job
+// profiles in Workday/SAP, roles in IAM). A seat may set an explicit override.
+model Role {
+  id               String @id @default(cuid())
+  // The job title, unique across the catalog.
+  title            String @unique
+  // Seniority band (0 = unbanded). Free-form ladder, e.g. 1..6.
+  level            Int    @default(0)
+  // Free text: Engineering / Design / Ops / Sales …
+  discipline       String @default("")
+  description      String @default("")
+  // The clearance seats inherit unless they override it.
+  defaultClearance Int    @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  positions Position[]
+
+  @@index([discipline])
+}
+
+// A reusable skill (Phase 3.5): an .md playbook that teaches an agent how to do a
+// certain kind of task. Lives in a shared library and is assigned to positions
+// (seats) via PositionSkill; injected into the run's system prompt when the seat's
+// holder runs. minClearance gates which seats may be granted it (a guardrail on
+// assignment, checked in the service).
+model Skill {
+  id           String @id @default(cuid())
+  // Short unique handle, e.g. "code-review". Human-readable, stable.
+  name         String @unique
+  // One-line summary shown in the library / assignment lists.
+  description  String @default("")
+  // The skill body — Markdown. This is what gets injected into the prompt.
+  body         String
+  // Minimum seat clearance to be granted this skill (0 = any). Assignment is
+  // refused below this in the service.
+  minClearance Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  positions PositionSkill[]
+}
+
+// Join: which skills a position holds. Deleting either side removes the link.
+model PositionSkill {
+  positionId String
+  skillId    String
+
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  skill    Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([positionId, skillId])
+  @@index([skillId])
+}
+
+// A registered EXTERNAL MCP server (Phase 3.7): a source of real tools (edit a
+// Word/PPT/Excel doc, query Supabase, …) the agent can call. Lives in a shared
+// library, assigned to positions (seats) via PositionMcp. HTTP-first (url +
+// authToken); stdio (command/args) is an advanced option. authToken is stored
+// plaintext (local single-user app) and NEVER returned raw to the client — masked
+// in the DTO, like the provider keys. minClearance gates assignment.
+model McpServer {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  description  String  @default("")
+  // 'http' (remote, primary) | 'stdio' (local subprocess, advanced).
+  transport    String  @default("http")
+  // HTTP transport: the server URL and a bearer/auth token + optional headers.
+  url          String  @default("")
+  authToken    String  @default("")
+  headers      String  @default("") // JSON object of extra headers, or ''
+  // stdio transport: the command + args to spawn (JSON array string for args).
+  command      String  @default("")
+  args         String  @default("") // JSON array of args, or ''
+  // Minimum seat clearance to be granted this server (0 = any).
+  minClearance Int     @default(0)
+  // Disabled servers are kept but skipped at run time.
+  enabled      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  positions PositionMcp[]
+}
+
+// A STANDING RULE (Phase 3.8): "how we always work" — always answer in English,
+// follow API -> Service -> Hook -> Component -> Module, never raw hex. Distinct
+// from a Skill (a playbook for a TASK, applied situationally) and from Memory
+// (history/knowledge). Rules are injected into EVERY run of the seats in scope.
+//
+// Targeting is by SCOPE + inheritance, not per-seat assignment (the professional
+// pattern: IAM/k8s/git-config/CLAUDE.md all work this way). A seat's effective
+// rules = global + its team's + its position's, concatenated in that order. So a
+// rule written once at global scope applies everywhere, with no per-seat wiring.
+// No clearance gate: a rule is a directive, not a secret.
+// Who an agent IS and how it speaks. Assigned to the AGENT, not the seat — the
+// one deliberate exception to seat-derived capability: move Ebon to another desk
+// and its clearance changes, its voice should not.
+model Personality {
+  id      String  @id @default(cuid())
+  name    String
+  summary String  @default("")
+  // The voice itself — tone, vocabulary, what this character cares about.
+  body    String
+  // How to answer "are you an AI?". Its own column because it needs a sane
+  // default and is the field that most shapes replies.
+  stance  String  @default("")
+  enabled Boolean @default(true)
+
+  agents Agent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Rule {
+  id      String  @id @default(cuid())
+  // Short label for the list, e.g. "Frontend layering".
+  title   String
+  // The directive itself — this is what goes into the prompt.
+  body    String
+  // 'global' (everyone) | 'team' (that team's seats) | 'position' (that one seat).
+  scope   String  @default("global")
+  // The team/position id for team/position scope; null for global.
+  ownerId String?
+  // Rules apply in this order within their scope.
+  order   Int     @default(0)
+  // Toggle a rule off without deleting it.
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scope, ownerId])
+}
+
+// Join: which MCP servers a position holds. Deleting either side removes the link.
+model PositionMcp {
+  positionId  String
+  mcpServerId String
+
+  position  Position  @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  mcpServer McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+
+  @@id([positionId, mcpServerId])
+  @@index([mcpServerId])
+}
+
+// Accumulated knowledge — tasks, results, insights, notes. Scoped so it belongs
+// to a TEAM (shared), a POSITION (the seat's role-memory, survives reassignment),
+// or an AGENT (thin personal layer that follows the character). `ownerId` points
+// at the team/position/agent by that scope. Reads are gated: team memory to
+// anyone on the team, agent memory to that agent, position memory by clearance
+// (a memory tagged clearance N needs the reader's effective clearance >= N).
+model Memory {
+  id             String  @id @default(cuid())
+  // 'team' | 'position' | 'agent'
+  scope          String
+  // The team/position/agent id this memory belongs to (by scope).
+  ownerId        String
+  // 'task' | 'result' | 'insight' | 'note'
+  kind           String  @default("note")
+  body           String
+  // Minimum clearance to read this entry. Only meaningful for position-scoped
+  // memory; team/agent scopes gate by membership instead. Default 0 = open.
+  clearance      Int     @default(0)
+  // Minimum dataType to read this entry: clearance says what an agent may DO,
+  // this says what it may KNOW. 1 = Public.
+  dataType       Int     @default(1)
+  // The agent key that wrote it, if any (system/manual entries may be null).
+  authorAgentKey String?
+
+  createdAt DateTime @default(now())
+
+  @@index([scope, ownerId])
+  @@index([dataType])
+}
+
+// A conversation, either with one agent (a DM) or a whole team (broadcast).
+// Exactly one of agentKey / teamId is set. Threads are the command surface: the
+// user sends a task, the agent (stubbed for now, an LLM later) replies with
+// progress and results in the same thread.
+model Thread {
+  id       String  @id @default(cuid())
+  // Target: an agent DM (by key) or a team broadcast (by id). One is null.
+  agentKey String?
+  teamId   String?
+  subject  String  @default("")
+
+  // Supervised pause: when a run is waiting for the user's decision, the run id
+  // to decide against and a description of the proposed step. Both null when no
+  // run is paused. The frontend shows proceed/stop/edit while these are set.
+  pendingRunId String?
+  pendingStep  String?
+
+  // The run currently executing on this thread (set on `started`, cleared on
+  // done/error). Lets the UI offer a hard-stop button while a run is in flight —
+  // even when it's NOT paused (e.g. a long auto-approved read loop). Null = idle.
+  activeRunId String?
+
+  // Phase 4 — the root of the delegation tree currently running on this thread.
+  // Null = idle. A team run has MANY concurrent runs, so the singular
+  // activeRunId/pendingRunId above can't represent it; those stay for solo runs
+  // (unchanged behaviour), while a tree is driven from the Run table via this
+  // one pointer. That single owning row is what makes a cascading cancel atomic.
+  rootRunId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+
+  @@index([agentKey])
+  @@index([teamId])
+}
+
+// One message in a thread. `sender` is who wrote it: the user, an agent, or the
+// system (acks, status). `readAt` is null until the user has seen it — unread
+// agent/system messages drive the inbox badge. `resultRef` optionally points at
+// a produced artifact (a memory id, a file path) for the "done with results" case.
+model Message {
+  id        String    @id @default(cuid())
+  threadId  String
+  // 'user' | 'agent' | 'system'
+  sender    String
+  // For agent/system messages, which agent it came from (a team thread has many).
+  agentKey  String?
+  body      String
+  resultRef String?
+  readAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+}
+
+// A prop on a floor. Seeded decorative props (trees, bushes) are non-blocking
+// so the original floors stay walkable; props placed in the editor block a
+// tile, so an agent cannot path through them. `blocking` is the switch.
+model Prop {
+  id       String  @id @default(cuid())
+  roomId   String
+  kind     String
+  x        Int
+  y        Int
+  rotation Int     @default(0)
+  blocking Boolean @default(true)
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, x, y])
+  @@index([roomId])
+}
+
+// A decorative floor tile, painted over the background but under the agents.
+// Purely cosmetic — tiles do NOT affect walkability (that is props, later).
+// One tile per (room, x, y): painting a cell replaces whatever was there.
+model Tile {
+  id       String @id @default(cuid())
+  roomId   String
+  // Which tile art: a key into the frontend TILE_KINDS palette.
+  kind     String
+  x        Int
+  y        Int
+  // Quarter-turn rotation: 0, 90, 180, 270.
+  rotation Int    @default(0)
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, x, y])
+  @@index([roomId])
+}
+
+// A desk position on a floor. Introduced so seats have stable identity: the
+// frontend still resolves tile coordinates from its ROOMS constant for now,
+// but agents reference a Seat row rather than an array index, so a later
+// editor can move or delete a seat without renumbering everyone else.
+model Seat {
+  id   String @id @default(cuid())
+  // Floor index, matching the frontend ROOMS order.
+  room Int
+  // Seat index within that floor, matching ROOMS[room].seats order today.
+  seat Int
+  // Optional human label for the desk ("window desk", "Wizard's spot"). Shown in
+  // the seat editor; empty falls back to "seat <index>".
+  name String @default("")
+  // Tile the desk occupies. Mirrors ROOMS[room].seats[seat] at seed time;
+  // becomes the source of truth once rooms move into the database.
+  tx   Int
+  ty   Int
+
+  agent Agent?
+
+  @@unique([room, seat])
+}
+
+model Agent {
+  id                String       @id @default(cuid())
+  // Stable identifier used by the frontend to key sprites and selection.
+  key               String       @unique
+  name              String
+  // Room index into the frontend's ROOMS array: 0 = HQ, 1 = Gaming Room.
+  room              Int
+  // Seat index into that room's `seats` array. Unique per room, so two
+  // agents can never share a desk. Kept alongside seatId during the seat-id
+  // migration; seatId is the forward-looking handle.
+  seat              Int
+  // The desk this agent occupies. Nullable only so the migration can backfill;
+  // every seeded agent gets one.
+  seatId            String?      @unique
+  seatRef           Seat?        @relation(fields: [seatId], references: [id])
+  // The team position this agent currently holds, if any. Null = unassigned
+  // (on the bench). Clearance is derived from this position when set; the
+  // Agent.clearance column below stays as a fallback for unassigned agents and
+  // is phased out once the dossier reads clearance from the position.
+  positionId        String?      @unique
+  position          Position?    @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  spritePath        String
+  portraitPath      String
+  title             String
+  tagline           String
+  // Per-agent LLM model override (an OpenRouter model id, e.g.
+  // "openrouter/anthropic/claude-3.7-sonnet"). Null = use the global default from
+  // AppSettings. Resolved when Node builds a run's RunSpec.
+  model             String?
+  // Per-agent IMAGE model override, for `generate_image`. A separate cascade
+  // from `model` above because they answer different questions: `model` is what
+  // the agent REASONS with (and must support tool calling), this is what it
+  // DRAWS with. Null = the global default from AppSettings.
+  imageModel        String?
+  // Per-agent SPEECH model override, for `generate_speech`. A third cascade
+  // beside `model` and `imageModel`, and separate for the same reason: a model
+  // that talks is almost never one that reasons or draws.
+  speechModel       String?
+  // The agent's voice. Null = no personality block in the prompt.
+  // Which web tools this agent is offered. Null = the global default.
+  webMode           String?
+  personalityId     String?
+  personality       Personality? @relation(fields: [personalityId], references: [id], onDelete: SetNull)
+  // Per-agent cost ceiling in USD, covering this agent's OWN DELEGATION SUBTREE
+  // — itself plus everything it delegates, however deep. Null = inherit the
+  // global AppSettings.maxCostPerTree.
+  //
+  // This does NOT replace the global ceiling; it nests inside it. Both are
+  // checked and the LOWER one binds, which is what a budget means in an
+  // organisation: a department cannot outspend the company, and a manager with
+  // a tighter budget than the company's is bound by their own.
+  maxCost           Float?
+  // Phase 3.5 — workspace override. When set, the agent works IN this real
+  // directory instead of the default DATA_ROOT/agent-workspaces/<floor> sandbox
+  // (the "connect to a real folder / project" feature). Null = default sandbox.
+  workspaceDir      String?
+  // Safety boundary for a real-folder mount: when true (default), the agent gets
+  // ONLY read tools regardless of clearance — it can look at the folder but never
+  // write to it. Writing into a real folder requires flipping this off deliberately.
+  workspaceReadOnly Boolean      @default(true)
+  // Phase 3.6 — human-in-the-loop toggle. When true (default), the agent PAUSES
+  // before each consequential tool for the user's approval (Phase 2). When false,
+  // it runs unattended (still confined by clearance + workspace mount). Trust is a
+  // property of the agent: flip it off for one you've decided to let work solo.
+  supervised        Boolean      @default(true)
+  // Phase 4 — trusted delegator. When true, this leader's `delegate` calls do
+  // NOT pause for approval; every other consequential tool still obeys
+  // `supervised` above. A DELIBERATELY SEPARATE flag, because "I trust you to
+  // edit files" and "I trust you to spend budget spawning four agents" are
+  // different decisions — folding them into one would mean the only way to skip
+  // approving a fan-out is to make the leader unattended for everything.
+  // Trust removes the CLICK, never the ceiling: the depth / run / cost caps and
+  // the same-team target check still apply to every delegation.
+  trustedDelegator  Boolean      @default(false)
+  // Dossier fields. These are constrained vocabularies rather than free text,
+  // so they get real columns the database can reject bad values for.
+  role              String       @default("Employee")
+  // Clearance ladder 0-8; stored as the level so it sorts, with the label
+  // resolved at render time.
+  clearance         Int          @default(1)
+  // Data sensitivity ladder 1-14, same reasoning.
+  dataType          Int          @default(2)
+  tenure            String       @default("New hire")
+  // Free text: flavour, not a constrained vocabulary.
+  focus             String       @default("")
+  // Which direction each spritesheet row faces, top row first. Sheets are not
+  // consistent about this, so it is stored per agent rather than assumed.
+  // JSON string, same reason as `traits`.
+  rowOrder          String       @default("[\"down\",\"right\",\"up\",\"left\"]")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  responsibilities Responsibility[]
+
+  @@unique([room, seat])
+}
+
+model Responsibility {
+  id      String @id @default(cuid())
+  agentId String
+  text    String
+  // Display order within the agent's dossier.
+  order   Int    @default(0)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+}
+
+// Phase 4 — one row per agent run, and the DELEGATION TREE that links them.
+// Every run writes one, including solo runs (a solo run is a tree of one), so
+// nothing in Phases 1-3.9 is special-cased. This is the spine of the phase: the
+// tree mission-control renders, the budget counters, and the record a waiting
+// leader reads its reports from.
+model Run {
+  // The runId (a uuid) already generated by buildRunSpec — not a fresh cuid, so
+  // it matches every RuntimeEvent's runId.
+  id          String  @id
+  threadId    String
+  agentKey    String?
+  // The tree. `parentRunId` = the run that delegated this one (null for a root);
+  // `rootRunId` = the tree's origin (its own id for a root). `depth` 0 = root.
+  parentRunId String?
+  rootRunId   String
+  depth       Int     @default(0)
+  // 'running' | 'paused' | 'done' | 'error' | 'cancelled'
+  status      String  @default("running")
+  // The step THIS run is waiting on, when status is 'paused'. A pause belongs to
+  // the RUN, not the thread: at depth 2+ a middle manager is simultaneously a
+  // child (of its leader) and a parent (of its reports), so a thread-level
+  // pointer cannot say which of several live runs is the one asking. Null unless
+  // this run is paused.
+  pendingStep String?
+  // The run's final answer, stored so a waiting parent can read its reports back.
+  result      String  @default("")
+  // Accumulated USD for THIS run, reported by the AI service on `done`. A tree's
+  // spend is SUM(cost) over rootRunId — which is what checkBudget reads.
+  cost        Float   @default(0)
+  // The caps SNAPSHOTTED from AppSettings when the ROOT run started, then carried
+  // down to every child. Editing the limits mid-flight must never change a tree
+  // already in progress; the next tree picks up the new values.
+  maxDepth    Int     @default(3)
+  maxRuns     Int     @default(12)
+  maxCost     Float   @default(2.0)
+  // The seat this run executed as — the clearance source, kept for the audit
+  // trail (clearance is NEVER inherited from a delegating leader).
+  positionId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([rootRunId])
+  @@index([parentRunId])
+  @@index([threadId])
+}
+
+model AppSettings {
+  id                 String @id @default("default")
+  theme              String @default("dark")
+  fontSize           Int    @default(16)
+  fontFamily         String @default("Inter")
+  // The global default LLM model (an OpenRouter model id). Used for any agent
+  // without its own `model` override. Empty = fall back to the AI service's env.
+  defaultModel       String @default("")
+  // Phase 3.6 — provider API keys entered in the settings panel, so the user
+  // doesn't edit aiservice/.env by hand. Passed into each run; the AI service
+  // prefers these over its own env. Empty = fall back to the service's env key.
+  // NOTE: stored in plaintext (local single-user app); never logged, masked in UI.
+  // The model `generate_image` dispatches to when an agent has no override.
+  // Empty = the AI service's own env default.
+  imageModel         String @default("")
+  // The model `generate_speech` dispatches to when an agent has no override.
+  // Empty = the AI service's own env default.
+  speechModel        String @default("")
+  // 'fetch' | 'browse' | 'both' — what every agent gets unless it overrides.
+  webMode            String @default("fetch")
+  openrouterKey      String @default("")
+  serperKey          String @default("")
+  replicateKey       String @default("")
+  // Phase 4 — delegation limits, editable in the settings panel for users who
+  // have the budget (or the hardware) and don't want to be fenced in.
+  //   maxDelegationDepth: how many LEVELS deep a team may delegate. Clamped 1-10.
+  //     NO "unlimited": depth is the only structural guard against a delegation
+  //     cycle — runs/cost would stop a loop only after burning the whole budget.
+  //   maxRunsPerTree: total runs one task may spawn. 0 = unlimited.
+  //   maxCostPerTree: USD. 0 = unlimited. Checked BETWEEN runs (it stops starting
+  //     NEW work), so a single expensive run can overshoot it.
+  maxDelegationDepth Int    @default(3)
+  maxRunsPerTree     Int    @default(12)
+  maxCostPerTree     Float  @default(2.0)
+}

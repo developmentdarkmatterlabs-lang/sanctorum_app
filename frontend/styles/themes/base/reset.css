@@ -1,0 +1,36 @@
+/* Base reset — layered on top of Tailwind preflight. */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--surface-primary);
+  color: var(--content-primary);
+  font-family: var(--font-sans);
+}
+
+/* Radial vignette + scanlines behind the office canvas. */
+.office-wrap {
+  background: radial-gradient(
+    1200px 500px at 50% -10%,
+    var(--surface-secondary) 0%,
+    var(--surface-primary) 60%
+  );
+}
+
+/* Overlay is pinned to the viewport box, not the scrolled content, so it does
+   not drift when the canvas is panned. */
+.office-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.015) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: overlay;
+}

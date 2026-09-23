@@ -1,0 +1,12 @@
+-- A pause belongs to the RUN, not the thread.
+--
+-- `Thread.pendingRunId`/`pendingStep` assume ONE pausable run per thread. That
+-- held while a delegation tree was two levels deep: only the root could pause,
+-- because every child was a leaf. At depth 2+ a middle manager is BOTH a child
+-- (of its leader) and a parent (of its reports) — so its pause had nowhere to
+-- live. It was dropped by the isChild guard, and the UI attributed it to
+-- whichever run the thread still pointed at, i.e. the root.
+--
+-- Recording the step on the run itself lets every level own its own pause.
+-- Thread.pendingRunId stays as-is for the existing solo-run chat UI.
+ALTER TABLE "Run" ADD COLUMN "pendingStep" TEXT;

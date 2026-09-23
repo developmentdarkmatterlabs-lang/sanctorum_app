@@ -1,0 +1,2 @@
+ALTER TABLE "Agent" ADD COLUMN "workspaceDir" TEXT;
+ALTER TABLE "Agent" ADD COLUMN "workspaceReadOnly" BOOLEAN NOT NULL DEFAULT true;

@@ -1,0 +1,39 @@
+{
+  "name": "sanctorum-backend",
+  "version": "1.0.0",
+  "description": "Backend for Sanctorum",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "ts-node prisma/seed.ts",
+    "db:seed:roles": "ts-node prisma/seedRoles.ts"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.0",
+    "busboy": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "multer": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.0.0",
+    "prisma": "^6.0.0",
+    "ts-node": "^10.9.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.0"
+  }
+}

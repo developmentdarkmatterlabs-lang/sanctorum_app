@@ -1,0 +1,3 @@
+ALTER TABLE "AppSettings" ADD COLUMN "openrouterKey" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "AppSettings" ADD COLUMN "serperKey" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "AppSettings" ADD COLUMN "replicateKey" TEXT NOT NULL DEFAULT '';

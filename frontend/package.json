@@ -1,0 +1,34 @@
+{
+  "name": "sanctorum-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "scan:props": "node scripts/scanProps.mjs",
+    "scan:tiles": "node scripts/scanTiles.mjs",
+    "scan": "npm run scan:tiles && npm run scan:props",
+    "dev": "npm run scan && next dev -p 3000",
+    "build": "npm run scan && next build",
+    "start": "next start",
+    "lint": "eslint",
+    "build:electron": "npm run scan && cross-env ELECTRON_BUILD=1 next build"
+  },
+  "dependencies": {
+    "framer-motion": "^12.0.0",
+    "lucide-react": "^0.561.0",
+    "next": "16.2.10",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
