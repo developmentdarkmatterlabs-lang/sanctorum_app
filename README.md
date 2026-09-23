@@ -1,4 +1,4 @@
-# Sanctorum
+# Sanctorum - Pixel Agents
 
 **An agent operating system where capability is granted by organizational position, not by code.**
 
