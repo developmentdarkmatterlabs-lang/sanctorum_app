@@ -138,6 +138,7 @@ export default function OfficeModule() {
   const {
     tree: runTree,
     totalCost: treeCost,
+    totalTokens: treeTokens,
     live: treeLive,
     loading: treeLoading,
     openTree,
@@ -377,6 +378,7 @@ export default function OfficeModule() {
             <RunTree
               tree={runTree}
               totalCost={treeCost}
+              totalTokens={treeTokens}
               live={treeLive}
               loading={treeLoading}
               nameFor={(key) => (key ? (rosterByKey[key]?.name ?? key) : 'unassigned')}

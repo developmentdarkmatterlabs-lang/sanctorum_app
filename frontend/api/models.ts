@@ -54,6 +54,10 @@ export type AppSettings = {
   maxDelegationDepth: number;
   maxRunsPerTree: number;
   maxCostPerTree: number;
+  /** Tool steps without a check-in before a run pauses to ask. 0 = unlimited. */
+  maxStepsPerRun: number;
+  /** Skip re-sending an unchanged file an agent already read in the same run. */
+  dedupeReads: boolean;
   /** Whether stored keys are OS-encrypted. False in a browser. */
   keysEncrypted: boolean;
 };
@@ -73,6 +77,8 @@ export type SettingsWrite = {
   maxDelegationDepth?: number;
   maxRunsPerTree?: number;
   maxCostPerTree?: number;
+  maxStepsPerRun?: number;
+  dedupeReads?: boolean;
 };
 
 /** The live model list (backend caches it; `refresh` bypasses the cache). */

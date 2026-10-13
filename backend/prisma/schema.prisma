@@ -464,6 +464,8 @@ model Agent {
   // organisation: a department cannot outspend the company, and a manager with
   // a tighter budget than the company's is bound by their own.
   maxCost           Float?
+  // Tool steps this agent may take without a check-in; replaces the global setting. Null = inherit.
+  maxSteps          Int?
   // Phase 3.5 — workspace override. When set, the agent works IN this real
   // directory instead of the default DATA_ROOT/agent-workspaces/<floor> sandbox
   // (the "connect to a real folder / project" feature). Null = default sandbox.
@@ -507,6 +509,7 @@ model Agent {
   responsibilities Responsibility[]
 
   @@unique([room, seat])
+  @@index([personalityId])
 }
 
 model Responsibility {
@@ -550,6 +553,10 @@ model Run {
   // Accumulated USD for THIS run, reported by the AI service on `done`. A tree's
   // spend is SUM(cost) over rootRunId — which is what checkBudget reads.
   cost        Float   @default(0)
+  // Token totals from this run's usage events; cachedTokens is part of promptTokens.
+  promptTokens     Int @default(0)
+  completionTokens Int @default(0)
+  cachedTokens     Int @default(0)
   // The caps SNAPSHOTTED from AppSettings when the ROOT run started, then carried
   // down to every child. Editing the limits mid-flight must never change a tree
   // already in progress; the next tree picks up the new values.
@@ -566,6 +573,20 @@ model Run {
   @@index([rootRunId])
   @@index([parentRunId])
   @@index([threadId])
+}
+
+// One LLM call inside a run: the per-step record behind the run's token totals.
+model RunUsage {
+  id               String   @id @default(cuid())
+  runId            String
+  model            String   @default("")
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  cachedTokens     Int      @default(0)
+  cost             Float    @default(0)
+  createdAt        DateTime @default(now())
+
+  @@index([runId])
 }
 
 model AppSettings {
@@ -602,4 +623,8 @@ model AppSettings {
   maxDelegationDepth Int    @default(3)
   maxRunsPerTree     Int    @default(12)
   maxCostPerTree     Float  @default(2.0)
+  // Tool steps a run may take without a check-in before it pauses to ask. 0 = unlimited.
+  maxStepsPerRun     Int    @default(200)
+  // Answer a repeat read of an unchanged file with a short note, not the file.
+  dedupeReads        Boolean @default(true)
 }

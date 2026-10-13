@@ -25,6 +25,10 @@ export type RunNode = {
   result: string;
   /** USD spent by this run. The tree's total is the sum across its runs. */
   cost: number;
+  /** Token totals for this run; `cachedTokens` is the cached part of the prompt. */
+  promptTokens: number;
+  completionTokens: number;
+  cachedTokens: number;
   /** The caps this tree was started with (snapshotted, so editing the settings
    *  mid-flight never changes a task already in progress). */
   maxDepth: number;

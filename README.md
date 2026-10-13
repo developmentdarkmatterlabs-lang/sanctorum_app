@@ -1,6 +1,28 @@
-# Sanctorum
+<p align="center">
+  <picture>
+    <source srcset="docs/assets/readme/hero-dark.webp" media="(prefers-color-scheme: dark)">
+    <img src="docs/assets/readme/hero.webp" alt="The Sanctorum office: the HQ floor in pixel art with agents walking between desks, the toolbar for teams, roles, skills, MCP servers, rules, voices, fleet and settings, and the list of agents" width="100%">
+  </picture>
+</p>
 
-**An agent operating system where capability is granted by organizational position, not by code.**
+<h1 align="center">Sanctorum</h1>
+
+<p align="center"><b>An agent operating system where capability is granted by organizational position, not by code.</b><br>
+Seat AI agents in an org chart, and every tool, folder and budget they get follows from the chair they hold: enforced in code, supervised by you.</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License: AGPL-3.0"></a>
+  <a href="#getting-started"><img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey" alt="Platforms: Windows and macOS"></a>
+  <a href="https://github.com/ablancq95/sanctorum"><img src="https://img.shields.io/badge/source-GitHub-181717?logo=github" alt="Source on GitHub"></a>
+</p>
+
+<p align="center">
+  <a href="#getting-started"><b>Getting started</b></a> ·
+  <a href="#a-tour"><b>Tour</b></a> ·
+  <a href="#the-capability-model"><b>Capability model</b></a> ·
+  <a href="#features"><b>Features</b></a> ·
+  <a href="#sanctorum-vs-the-field"><b>Compare</b></a>
+</p>
 
 Sanctorum is a supervised multi-agent orchestration platform with role-based access control. You
 create *roles*, seat *agents* into them, and each agent's real capability — which tools it may call,
@@ -14,6 +36,10 @@ no code path to it — not a prompt asking it politely to refrain.
 ---
 
 ## Table of contents
+
+**See it**
+
+- [A tour](#a-tour)
 
 **The idea**
 
@@ -64,6 +90,93 @@ no code path to it — not a prompt asking it politely to refrain.
 - [Roadmap](#roadmap)
 - [Naming the category](#naming-the-category)
 - [Sanctorum vs the field](#sanctorum-vs-the-field)
+
+---
+
+## A tour
+
+### 1 · The entrance
+
+<img src="docs/assets/readme/entrance.webp" alt="The Sanctorum title screen: a vaulted gateway with a glowing portal and two attendants at consoles, the line 'A tower of agents, connected by portals', and an Enter the office button" width="100%">
+
+The title screen. Behind it is a tower of eleven floors, each with its own seats
+and agents.
+
+### 2 · Teams — an org chart that grants power
+
+<img src="docs/assets/readme/teams.webp" alt="The Teams window showing the Fantasy Writer team on floor 9, Dungeon, reporting into Executive: a Story Lead seat marked LEADER and held by Ebon, Character Design, Worldbuilder, Continuity Editor and Novelist seats held by Senoj-Yvad, Aeon, Atum and Uriel, and the team's shared memory below" width="100%">
+
+A team lives on a floor and can report into a parent team. It is made of seats,
+and each seat holds a role. The starred seat leads the team, and only a leader
+can delegate to the others. A team also shares a memory: the note at the bottom
+was written by its agents.
+
+### 3 · The dossier — capability comes from the seat
+
+<table>
+<tr>
+<td width="50%"><img src="docs/assets/readme/dossier.webp" alt="Ebon's dossier: portrait, the title Illusionist of Interfaces, the profession Magician marked as a label only, and clearance Level 6 inherited from the Story Lead role"></td>
+<td width="50%"><img src="docs/assets/readme/dossier-controls.webp" alt="Further down Ebon's dossier: personality, web access, supervision switched off with a warning, steps per run, trusted delegation, a budget of 0.75 USD, rules in effect and skills"></td>
+</tr>
+</table>
+
+An agent's profession is only a label. Ebon is a "Magician", but it holds the
+Story Lead seat, so it inherits that role's clearance of 6, and the clearance
+decides which tools it gets. Further down, each agent has its own model,
+personality, web access, supervision, step limit and budget.
+
+### 4 · Roles — one job, many seats
+
+<img src="docs/assets/readme/roles.webp" alt="The role library: roles grouped by discipline with their clearance and how many seats hold them, and the Story Lead role open with its discipline, level, default clearance of 6 and description" width="100%">
+
+A library of over two hundred roles, grouped by discipline. A role is defined
+once and shared by every seat that references it, so editing it changes every
+seat that holds it.
+
+### 5 · The terminal — every step, every pause
+
+<img src="docs/assets/readme/terminal.webp" alt="Aeon's terminal: the clearance and tools for the run, its success criterion, a write_file step, a pause awaiting approval because the task reached its 0.01 USD cost ceiling, the approval, the remaining steps, the answer, and the evaluator's verdict" width="100%">
+
+Each agent's runs stream live: the tools its clearance grants, the criterion it
+is graded against, every step and every pause. This run reached its cost
+ceiling, waited for approval, then finished and passed its grade.
+
+### 6 · Delegation — one task, a tree of runs
+
+<img src="docs/assets/readme/delegation.webp" alt="The delegation tree for one task: Ebon's run and the run it delegated to Uriel, each with input tokens, cache share, output tokens and cost, and the task's total of 0.0468 USD against a 6 USD ceiling" width="100%">
+
+When a leader delegates, each report runs at its own clearance. The tree shows
+what every run spent: tokens in and out, how much came from the provider's
+cache, and the cost against the task's ceiling.
+
+### 7 · Fleet — every agent at a glance
+
+<img src="docs/assets/readme/fleet.webp" alt="The fleet view: a grid of fifteen agent tiles, each with its name, title, status and last evaluation, and a link to its terminal" width="100%">
+
+Every agent as a tile, with its status and last result. Any terminal opens from
+here.
+
+### 8 · Personalities — a voice that survives a reseat
+
+<img src="docs/assets/readme/personalities.webp" alt="The personalities window: fifteen voices with one-line summaries, and Ebon's open, with its voice and the stance it takes when asked whether it is an AI" width="100%">
+
+A personality belongs to the agent, not the seat, so it stays when the agent
+moves. It also sets how the agent answers "are you an AI?".
+
+### 9 · Settings — any model, your own key
+
+<img src="docs/assets/readme/settings.webp" alt="Settings: web access set to Browser, announcements set to Chime, provider keys shown only as set, the delegation limits, and the model picker listing models with their prices, context sizes and capabilities" width="100%">
+
+Pick from OpenRouter's catalogue of hundreds of models, filtered by maker, price
+and capability. Keys are encrypted by your operating system's keychain. Web
+access, announcements and the delegation limits live here too.
+
+### 10 · The building
+
+<img src="docs/assets/readme/floors.webp" alt="All eleven floors of the tower in pixel art: HQ, IT, Finance, Marketing, Cafeteria, Gaming Room, Library, Reception, Dungeon, Cave and Hell" width="100%">
+
+Eleven floors, from HQ down to Hell, joined by a lift and portals. Agents walk
+to their seats and start working when they arrive.
 
 ---
 
@@ -1702,27 +1815,62 @@ honest one here, because the gate is enforced outside the model rather than requ
 Researched September 2026. Star counts and capabilities move fast — treat the
 numbers as a snapshot, not a scoreboard.
 
-Eighteen projects get called "AI agent platform," and they are not doing the
+Twenty projects get called "AI agent platform," and they are not doing the
 same thing. Grouped by what they actually are:
 
 ### 1. Supervised multi-agent desktop apps — the direct comparison
 
-| | Sanctorum | [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin) | [Mission Control](https://github.com/MeisnerDan/mission-control) | [Agentglass](https://github.com/SirAllap/agentglass) |
-|---|---|---|---|---|
-| **Stars** | — | 7.7k | 947 | 313 |
-| **License** | AGPL-3.0 | MIT | AGPL-3.0 | MIT |
-| **Runs its own agent loop** | ✅ LangGraph | ❌ wraps CLIs | ❌ wraps Claude Code | ❌ observes only |
-| **Pixel office** | ✅ | ✅ | ❌ | ❌ |
-| **Org-chart permissions** | ✅ | ❌ flat | ❌ roles, not hierarchy | ❌ |
-| **Approval before each tool** | ✅ | ✅ | ✅ | ✅ |
-| **Per-agent cost ceiling** | ✅ | ✅ | ✅ | ✅ (tracking) |
-| **Watchable browser** | ✅ | ❌ | ❌ | ❌ |
-| **Desktop app** | ✅ | ✅ | ❌ web | ✅ |
-| **Signed builds** | ❌ | ✅ notarized | n/a | ❌ |
+| | Sanctorum | [Paperclip](https://github.com/paperclipai/paperclip) | [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin) | [OpenRig](https://github.com/mvschwarz/openrig) | [Mission Control](https://github.com/MeisnerDan/mission-control) | [Agentglass](https://github.com/SirAllap/agentglass) |
+|---|---|---|---|---|---|---|
+| **Stars** | — | **82.1k** | 7.7k | 326 | 947 | 313 |
+| **License** | AGPL-3.0 | MIT | MIT | Apache 2.0 | AGPL-3.0 | MIT |
+| **Runs its own agent loop** | ✅ LangGraph | ❌ heartbeats external agents | ❌ wraps CLIs | ❌ tmux + Claude Code/Codex | ❌ wraps Claude Code | ❌ observes only |
+| **Pixel office** | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Org chart** | ✅ | ✅ | ❌ flat | ⚠ pods + seats | ❌ roles, not hierarchy | ❌ |
+| **Tool access *derived* from seat** | ✅ | ⚠ unspecified | ❌ | ❌ identity only | ❌ | ❌ |
+| **Approval before each tool** | ✅ | ❌ hire/task level | ✅ | ❌ | ✅ | ✅ |
+| **Per-agent cost ceiling** | ✅ | ✅ monthly, hard stop | ✅ | ❌ | ✅ | ✅ (tracking) |
+| **Data classification** | ✅ `dataType` | ❌ scoped secrets | ❌ | ❌ | ❌ | ❌ |
+| **Watchable browser** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Desktop app** | ✅ | ❌ web (on roadmap) | ✅ | ❌ TUI | ❌ web | ✅ |
+| **Signed builds** | ❌ | n/a | ✅ notarized | n/a | n/a | ❌ |
 
-These four solve the same problem. The differences are real but narrow —
-everyone here has approval gates and spend limits; the question is what a
-permission is *derived from*.
+**[Paperclip](https://github.com/paperclipai/paperclip)** is the most important
+entry in this comparison, because it is the only other project that starts from
+the same sentence Sanctorum does: *"If OpenClaw is an employee, Paperclip is the
+company."* Org charts, reporting lines, job descriptions, per-agent monthly
+budgets with hard stops, scoped secrets, audit logging — and 82k stars in six
+months.
+
+Two real differences, and only one of them favours Sanctorum:
+
+- **It does not run the agent.** Paperclip is a *coordination* layer — a
+  DB-backed wakeup queue that heartbeats external runners (Claude Code, Codex,
+  Cursor, bash, HTTP webhooks). Supervision lands at hire, task and policy level
+  — *"approve hires, override strategy, pause or terminate any agent"* — rather
+  than before each tool call, because the tool call happens inside someone
+  else's process. Sanctorum owns the loop, so it can stop the graph mid-run.
+- **It has 82k stars, 15k forks and a company behind it.** Sanctorum has
+  neither.
+
+Whether Paperclip *derives* tool access from position or simply stores it per
+agent is not stated in its documentation — it advertises "roles, permissions &
+boundaries" without specifying the resolution order. That is the one place
+Sanctorum's model is provably more specific, and it is a gap that could close in
+a single release.
+
+**[OpenRig](https://github.com/mvschwarz/openrig)** is the closest thing to
+Sanctorum's *vocabulary* without its enforcement. It has **seats** and **pods**,
+declared in YAML, with stable addresses like `dev-owner@first-project`. But a
+seat there is identity and shared context, not capability: *"the conversation
+occupying it can change while its identity and authored context remain."* No
+clearance check, no tool grant, no budget — it drives Claude Code and Codex in
+tmux sessions you can attach to. Same noun, different job: OpenRig is a harness
+for terminal sessions, Sanctorum is a permission system.
+
+These six solve overlapping problems. The differences are narrower than they
+look — org charts and spend limits are no longer unusual; the question is what a
+permission is *derived from*, and who is holding the loop when it is enforced.
 
 ### 2. Personal AI operating systems — bigger scope, flatter permissions
 
@@ -1796,15 +1944,19 @@ rather than something one person installs.
 
 ### What is actually distinct here
 
-**Capability from position.** Eighteen projects, and the permission model is
+**Capability from position.** Twenty projects, and the permission model is
 almost always attached to the *agent* — a settings panel, an autonomy slider, a
 config file. Sanctorum computes it from `Role → Position → Agent → ToolGrant`,
 so editing a role moves every seat holding it, and a delegated run executes at
-the **subordinate's** clearance, never the leader's. Only Databricks (for data)
-and taOS (via access matrices) come close.
+the **subordinate's** clearance, never the leader's. Paperclip shares the org
+chart, and Databricks and taOS approach it from data and access matrices — but
+none of them states that a delegated run *drops* to the subordinate's clearance,
+which is the clause that makes an org chart a security boundary rather than a
+diagram.
 
 **Two axes.** Clearance says what an agent may *do*; `dataType` says what it may
-*know*. Nothing else here separates them.
+*know*. Paperclip scopes secrets per agent, which is the same instinct applied to
+credentials; nothing here separates the two axes across memory, files and tools.
 
 **Approval that means something.** The browser addresses elements by number, so
 an approval reads `click [button 18] "Buy now"` rather than a coordinate. And a
@@ -1812,6 +1964,9 @@ tool outside the grant has no code path — refusal is structural, not a prompt.
 
 ### What the field does better
 
+- **Paperclip** reached 82k stars in six months on the same thesis, runs
+  whatever agent you already use instead of asking you to adopt its runtime, and
+  has multi-tenant company isolation Sanctorum does not.
 - **Hermes** has 140k stars and reaches fifteen messaging platforms. Sanctorum
   has one window.
 - **OpenJarvis** has Stanford behind it and measures **energy per task**.

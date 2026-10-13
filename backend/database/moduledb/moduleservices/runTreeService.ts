@@ -1,4 +1,5 @@
 import { prisma } from '../../db';
+import type { UsageRecord } from '../../../runtime/AgentRuntime';
 
 // Phase 4 delegation tracing. The loop spans two processes (leader graph in
 // Python, child spawn + resume in Node), so a duplicate child or a leader that
@@ -40,21 +41,25 @@ export type TreeLimits = {
  * STRUCTURAL guard against a delegation cycle (a lead delegating to a report who
  * delegates back). The run and cost caps would stop such a loop eventually, but
  * only after burning the entire budget on nonsense. Runs and cost are budget
- * dials and take 0 = unlimited; depth is an invariant.
+ * dials and take 0 = unlimited; depth is an invariant. Steps per run is a
+ * dial too (0 = unlimited), capped at 5000.
  */
 export function clampLimits(input: {
   maxDelegationDepth?: number;
   maxRunsPerTree?: number;
   maxCostPerTree?: number;
+  maxStepsPerRun?: number;
 }): {
   maxDelegationDepth?: number;
   maxRunsPerTree?: number;
   maxCostPerTree?: number;
+  maxStepsPerRun?: number;
 } {
   const out: {
     maxDelegationDepth?: number;
     maxRunsPerTree?: number;
     maxCostPerTree?: number;
+    maxStepsPerRun?: number;
   } = {};
 
   if (input.maxDelegationDepth !== undefined) {
@@ -68,6 +73,10 @@ export function clampLimits(input: {
   if (input.maxCostPerTree !== undefined) {
     const n = Number(input.maxCostPerTree);
     out.maxCostPerTree = Number.isFinite(n) ? Math.max(0, n) : 2.0;
+  }
+  if (input.maxStepsPerRun !== undefined) {
+    const n = Math.trunc(Number(input.maxStepsPerRun));
+    out.maxStepsPerRun = Number.isFinite(n) ? Math.min(5000, Math.max(0, n)) : 200;
   }
   return out;
 }
@@ -125,6 +134,11 @@ export async function recordRun(input: {
   } catch {
     // Never let tree bookkeeping break a run that is otherwise fine.
   }
+}
+
+/** An agent's own step limit replaces the global one; 0 means unlimited. */
+export function effectiveMaxSteps(agentValue: number | null | undefined, globalValue: number): number {
+  return agentValue && agentValue > 0 ? agentValue : Math.max(0, globalValue);
 }
 
 export type BudgetVerdict =
@@ -217,37 +231,48 @@ export async function checkBudget(parentRunId: string): Promise<BudgetVerdict> {
     };
   }
 
-  const tree = await prisma.run.findMany({
-    where: { rootRunId: parent.rootRunId },
-    select: { cost: true },
-  });
-  const used = tree.length;
-  const spent = tree.reduce((sum, r) => sum + r.cost, 0);
-
+  const used = await prisma.run.count({ where: { rootRunId: parent.rootRunId } });
   if (parent.maxRuns > 0 && used >= parent.maxRuns) {
     return {
       ok: false,
       reason: `run limit reached (${used}/${parent.maxRuns} runs in this task). Finish with what you have.`,
     };
   }
-  if (parent.maxCost > 0 && spent >= parent.maxCost) {
-    return {
-      ok: false,
-      reason:
-        `cost ceiling reached ($${spent.toFixed(4)} of $${parent.maxCost.toFixed(2)}). ` +
-        `Finish with what you have.`,
-    };
+
+  const over = await overSpend(parent);
+  if (over) return { ok: false, reason: `${over} Finish with what you have.` };
+
+  return { ok: true, remaining: parent.maxRuns > 0 ? parent.maxRuns - used : -1 };
+}
+
+/**
+ * Both cost ceilings for one run, written once: the tree's snapshot and the
+ * run's agent's own subtree budget. Returns why it is over, or null.
+ */
+async function overSpend(run: {
+  id: string;
+  rootRunId: string;
+  maxCost: number;
+  agentKey: string | null;
+}): Promise<string | null> {
+  const tree = await prisma.run.findMany({
+    where: { rootRunId: run.rootRunId },
+    select: { cost: true },
+  });
+  const spent = tree.reduce((sum, r) => sum + r.cost, 0);
+  if (run.maxCost > 0 && spent >= run.maxCost) {
+    return `cost ceiling reached ($${spent.toFixed(4)} of $${run.maxCost.toFixed(2)} for this task).`;
   }
 
-  // --- The delegating AGENT's own ceiling ---------------------------------
+  // --- The AGENT's own ceiling ---------------------------------------------
   // Read live from the Agent row rather than snapshotted onto the Run like the
   // tree's caps are. The difference is deliberate: the tree's limits are frozen
   // when the root starts so that editing settings mid-flight cannot change a
   // task already running, but an agent's budget is a standing property of that
-  // agent — lowering it should bind the next delegation, not the next tree.
-  if (parent.agentKey) {
+  // agent — lowering it should bind the next step, not the next tree.
+  if (run.agentKey) {
     const agent = await prisma.agent.findUnique({
-      where: { key: parent.agentKey },
+      where: { key: run.agentKey },
       select: { maxCost: true, name: true },
     });
 
@@ -256,19 +281,24 @@ export async function checkBudget(parentRunId: string): Promise<BudgetVerdict> {
     // as "no extra limit" rather than "may spend nothing".
     const cap = agent?.maxCost ?? 0;
     if (cap > 0) {
-      const own = await subtreeSpend(parent.id, parent.rootRunId);
+      const own = await subtreeSpend(run.id, run.rootRunId);
       if (own >= cap) {
-        return {
-          ok: false,
-          reason:
-            `your own budget is spent ($${own.toFixed(4)} of $${cap.toFixed(2)} for ` +
-            `${agent?.name ?? 'you'} and your reports). Finish with what you have.`,
-        };
+        return (
+          `the budget for ${agent?.name ?? 'this agent'} and its reports is spent ` +
+          `($${own.toFixed(4)} of $${cap.toFixed(2)}).`
+        );
       }
     }
   }
+  return null;
+}
 
-  return { ok: true, remaining: parent.maxRuns > 0 ? parent.maxRuns - used : -1 };
+/** Whether a run is still inside its cost ceilings; the AI service asks between steps. */
+export async function checkSpend(runId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const run = await prisma.run.findUnique({ where: { id: runId } });
+  if (!run) return { ok: true };
+  const over = await overSpend(run);
+  return over ? { ok: false, reason: over } : { ok: true };
 }
 
 /** Every run in a tree, oldest first — what the mission-control view renders. */
@@ -324,8 +354,26 @@ export async function setRunPending(runId: string, step: string | null): Promise
     .catch(() => undefined);
 }
 
-/** Records what a run cost (reported by the AI service on `done`). */
+/** Records what a run cost (reported on `done`). Usage events already add it up live, so the higher figure wins. */
 export async function recordCost(runId: string, cost: number): Promise<void> {
   if (!Number.isFinite(cost) || cost <= 0) return;
-  await prisma.run.update({ where: { id: runId }, data: { cost } }).catch(() => undefined);
+  await prisma.run
+    .updateMany({ where: { id: runId, cost: { lt: cost } }, data: { cost } })
+    .catch(() => undefined);
+}
+
+/** Stores one LLM call's usage and adds it to the run's live totals. Best-effort. */
+export async function recordUsage(runId: string, usage: UsageRecord): Promise<void> {
+  await prisma.runUsage.create({ data: { runId, ...usage } }).catch(() => undefined);
+  await prisma.run
+    .update({
+      where: { id: runId },
+      data: {
+        promptTokens: { increment: usage.promptTokens },
+        completionTokens: { increment: usage.completionTokens },
+        cachedTokens: { increment: usage.cachedTokens },
+        cost: { increment: usage.cost },
+      },
+    })
+    .catch(() => undefined);
 }

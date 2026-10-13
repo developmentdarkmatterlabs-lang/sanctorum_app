@@ -53,6 +53,12 @@ export class ModelService {
     useModelStore.getState().setSettings(next);
   }
 
+  /** Turn the repeat-read note on or off for every agent. */
+  async setDedupeReads(on: boolean): Promise<void> {
+    const next = await updateSettings({ dedupeReads: on });
+    useModelStore.getState().setSettings(next);
+  }
+
   /** Patch any settings subset (theme/font/default model/raw provider key). */
   async updateSettings(patch: SettingsWrite): Promise<void> {
     useModelStore.getState().setSettings(await updateSettings(patch));
@@ -67,6 +73,7 @@ export class ModelService {
     maxDelegationDepth?: number;
     maxRunsPerTree?: number;
     maxCostPerTree?: number;
+    maxStepsPerRun?: number;
   }): Promise<void> {
     useModelStore.getState().setSettings(await updateSettings(patch));
   }

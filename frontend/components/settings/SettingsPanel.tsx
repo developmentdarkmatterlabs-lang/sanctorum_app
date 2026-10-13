@@ -185,6 +185,7 @@ export default function SettingsPanel({
     setImageModel,
     setSpeechModel,
     setWebMode,
+    setDedupeReads,
     setProviderKey,
     setLimits,
   } = useModels();
@@ -214,6 +215,7 @@ export default function SettingsPanel({
   const currentImage = settings?.imageModel ?? "";
   const currentSpeech = settings?.speechModel ?? "";
   const webMode: WebMode = settings?.webMode ?? "fetch";
+  const dedupeReads = settings?.dedupeReads ?? true;
 
   const choose = async (modelId: string) => {
     setSaving(true);
@@ -243,6 +245,15 @@ export default function SettingsPanel({
     setError(null);
     try {
       await setWebMode(mode);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save.");
+    }
+  };
+
+  const chooseDedupe = async (on: boolean) => {
+    setError(null);
+    try {
+      await setDedupeReads(on);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save.");
     }
@@ -415,7 +426,33 @@ export default function SettingsPanel({
                   step={0.5}
                   onCommit={(n) => setLimits({ maxCostPerTree: n })}
                 />
+                <LimitField
+                  label="Steps per run"
+                  hint="Tool steps an agent may take without a check-in. When reached, the run pauses and asks you to continue. Each approval restarts the count. Agents can override this. 0 = unlimited."
+                  value={settings?.maxStepsPerRun}
+                  min={0}
+                  max={5000}
+                  onCommit={(n) => setLimits({ maxStepsPerRun: n })}
+                />
               </div>
+            </div>
+
+            {/* Token saving: a repeat read of an unchanged file is not re-sent. */}
+            <div className="flex shrink-0 flex-col gap-2 rounded border border-[var(--border-primary)] p-2.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className={labelSm}>Skip repeat reads</span>
+                <Chip active={dedupeReads} onClick={() => void chooseDedupe(true)}>
+                  On
+                </Chip>
+                <Chip active={!dedupeReads} onClick={() => void chooseDedupe(false)}>
+                  Off
+                </Chip>
+              </div>
+              <p className="font-mono text-[9.5px] text-[var(--content-tertiary)]">
+                When an agent re-reads a file that has not changed, it gets a
+                short note instead of the same text again. Asking a second time
+                returns the full file.
+              </p>
             </div>
           </div>
 

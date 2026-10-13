@@ -31,6 +31,15 @@ export function useRuns() {
     loading,
     /** Total USD across the tree — what the cost ceiling is measured against. */
     totalCost: tree.reduce((sum, r) => sum + (r.cost || 0), 0),
+    /** Token totals across the tree; `cached` is the cached part of `prompt`. */
+    totalTokens: tree.reduce(
+      (sum, r) => ({
+        prompt: sum.prompt + (r.promptTokens || 0),
+        completion: sum.completion + (r.completionTokens || 0),
+        cached: sum.cached + (r.cachedTokens || 0),
+      }),
+      { prompt: 0, completion: 0, cached: 0 }
+    ),
     /** True while any run in the tree is still working. */
     live,
     openTree: useCallback((id: string) => runService.loadTree(id), []),

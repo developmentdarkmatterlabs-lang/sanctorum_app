@@ -229,6 +229,8 @@ export type RosterEntry = {
    *  it delegates), or null = inherit the global ceiling. Both are enforced and
    *  the lower binds — a department's budget nested inside the company's. */
   maxCost: number | null;
+  /** Tool steps without a check-in; replaces the global setting. Null = inherit. */
+  maxSteps: number | null;
   /** A real directory this agent works in instead of the default sandbox, or null. */
   workspaceDir: string | null;
   /** Read-only mount for a real-folder workspace (default true): observe, never mutate. */
@@ -277,6 +279,8 @@ export type AgentEdit = {
   /** USD ceiling for this agent's own delegation subtree; null or 0 clears it
    *  (inherit the global ceiling). */
   maxCost?: number | null;
+  /** Tool steps without a check-in; null or 0 clears it (inherit). */
+  maxSteps?: number | null;
   /** A real directory to work in; '' clears it (back to the default sandbox). */
   workspaceDir?: string;
   /** Read-only mount toggle for a real-folder workspace. */

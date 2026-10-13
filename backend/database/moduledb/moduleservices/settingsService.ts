@@ -42,6 +42,10 @@ export type SettingsDTO = {
   maxDelegationDepth: number;
   maxRunsPerTree: number;
   maxCostPerTree: number;
+  /** Tool steps without a check-in before a run pauses to ask. 0 = unlimited. */
+  maxStepsPerRun: number;
+  /** Skip re-sending an unchanged file an agent already read in the same run. */
+  dedupeReads: boolean;
   /** Whether stored keys are OS-encrypted. False outside Electron. */
   keysEncrypted: boolean;
 };
@@ -65,6 +69,8 @@ const toDTO = async (row: {
   maxDelegationDepth: number;
   maxRunsPerTree: number;
   maxCostPerTree: number;
+  maxStepsPerRun: number;
+  dedupeReads: boolean;
 }): Promise<SettingsDTO> => ({
   theme: row.theme,
   fontSize: row.fontSize,
@@ -79,6 +85,8 @@ const toDTO = async (row: {
   maxDelegationDepth: row.maxDelegationDepth,
   maxRunsPerTree: row.maxRunsPerTree,
   maxCostPerTree: row.maxCostPerTree,
+  maxStepsPerRun: row.maxStepsPerRun,
+  dedupeReads: row.dedupeReads,
   keysEncrypted: secretsAvailable(),
 });
 
@@ -127,6 +135,8 @@ export type SettingsPatch = {
   maxDelegationDepth?: number;
   maxRunsPerTree?: number;
   maxCostPerTree?: number;
+  maxStepsPerRun?: number;
+  dedupeReads?: boolean;
 };
 
 /** Patch any subset of settings. Returns the masked DTO (no raw keys). */
@@ -141,6 +151,7 @@ export async function updateSettings(patch: SettingsPatch): Promise<SettingsDTO>
       ...(patch.imageModel !== undefined ? { imageModel: patch.imageModel } : {}),
       ...(patch.speechModel !== undefined ? { speechModel: patch.speechModel } : {}),
       ...(isWebMode(patch.webMode) ? { webMode: patch.webMode } : {}),
+      ...(patch.dedupeReads !== undefined ? { dedupeReads: patch.dedupeReads } : {}),
       ...(patch.openrouterKey !== undefined
         ? { openrouterKey: await encryptSecret(patch.openrouterKey.trim()) }
         : {}),
@@ -156,6 +167,7 @@ export async function updateSettings(patch: SettingsPatch): Promise<SettingsDTO>
         maxDelegationDepth: patch.maxDelegationDepth,
         maxRunsPerTree: patch.maxRunsPerTree,
         maxCostPerTree: patch.maxCostPerTree,
+        maxStepsPerRun: patch.maxStepsPerRun,
       }),
     },
     create: { id: 'default' },

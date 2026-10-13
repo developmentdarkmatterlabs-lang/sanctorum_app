@@ -66,6 +66,10 @@ export type RunSpec = {
   /** Phase 3: the retry ceiling — how many worker→evaluator rounds before the run
    *  keeps its best attempt and stops. Omitted → the service default (3). */
   maxAttempts?: number;
+  /** Tool steps this run may take without a check-in before it pauses. Omitted = no limit. */
+  maxSteps?: number;
+  /** Answer a repeat read of an unchanged file with a short note, not the file. */
+  dedupeReads?: boolean;
   /** Phase 3.6: provider API keys entered in the settings panel. The AI service
    *  prefers these over its own env keys. Only non-empty keys are sent. */
   providerKeys?: {
@@ -117,6 +121,8 @@ export type RuntimeEventType =
   | 'delegated'
   // Phase 4: a child run's result flowing back to the leader that delegated it.
   | 'reported'
+  // One LLM call's tokens and cost. Bookkeeping only, never a chat line.
+  | 'usage'
   // The run finished successfully.
   | 'done'
   // The run failed; `body` carries the reason.
@@ -134,6 +140,15 @@ export type ApprovalDecision = {
   reportsReady?: boolean;
 };
 
+/** One LLM call's tokens and cost. `cachedTokens` is part of `promptTokens`. */
+export type UsageRecord = {
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  cachedTokens: number;
+  cost: number;
+};
+
 /** A single event in a run's stream. Same shape whatever the provider. */
 export type RuntimeEvent = {
   runId: string;
@@ -144,6 +159,8 @@ export type RuntimeEvent = {
   body?: string;
   /** For result events: a reference to what was produced. */
   ref?: string;
+  /** For usage events: the LLM call being reported. */
+  usage?: UsageRecord;
   /** ISO timestamp; assigned by the runtime or on ingest. */
   at?: string;
 };

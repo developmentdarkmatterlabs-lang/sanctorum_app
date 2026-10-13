@@ -332,6 +332,13 @@ router.patch('/:key', async (req, res) => {
   ) {
     update.maxCost = body.maxCost === null ? null : Number(body.maxCost);
   }
+  // Per-agent step limit; normalised in agentService exactly like the budget.
+  if (
+    body.maxSteps !== undefined &&
+    (typeof body.maxSteps === 'number' || typeof body.maxSteps === 'string' || body.maxSteps === null)
+  ) {
+    update.maxSteps = body.maxSteps === null ? null : Number(body.maxSteps);
+  }
 
   // Workspace override: a real directory to work in ('' clears it) and the
   // read-only toggle. Read-only stays the safe default; turning it off lets the

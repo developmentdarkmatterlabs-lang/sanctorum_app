@@ -29,14 +29,15 @@ from langgraph.prebuilt import ToolNode
 from ..config.settings import settings
 from ..runtime.models import RunSpec
 from ..tools.executor import ToolExecutor
+from .caching import with_cache_markers
 from .checkpoint import checkpointer
 from .evaluator import make_evaluator
 from .state import State
 
 
 def _worker_system_prompt(spec: RunSpec, state: State) -> str:
-    """The worker's system prompt: the role, the success criterion, and — on a
-    retry — the evaluator's feedback so the next attempt is criticism-driven."""
+    """The worker's system prompt: the role and the success criterion. Identical on
+    every turn so it stays cached; retry feedback arrives as a message instead."""
     prompt = (
         f"{spec.systemPrompt}\n\n"
         "Work toward this success criterion until you meet it or must ask the "
@@ -44,15 +45,7 @@ def _worker_system_prompt(spec: RunSpec, state: State) -> str:
         "Reply either with your final answer (no question), or — if you genuinely "
         "need input — a single clear question beginning with 'Question:'."
     )
-    feedback = state.get("feedback_on_work")
-    if feedback:
-        prompt += (
-            "\n\nYour previous attempt did NOT meet the success criteria. Feedback:\n"
-            f"{feedback}\n\nRevise your work to address it."
-        )
-    # The voice goes LAST, after the criterion and any feedback: the persona sits
-    # at the top of spec.systemPrompt, and by attempt three it is buried under
-    # corrections and the model drifts back to its default assistant tone.
+    # The voice goes last; the evaluator repeats it with each retry's feedback.
     if spec.personaReminder:
         prompt += f"\n\n{spec.personaReminder}"
     return prompt
@@ -81,6 +74,7 @@ def build_graph(
         image_model=spec.imageModel or settings.image_model,
         speech_model=spec.speechModel or settings.speech_model,
         cost_tracker=cost,
+        dedupe_reads=bool(spec.dedupeReads),
     )
     tools = [*executor.langchain_tools(), *(mcp_tools or [])]
 
@@ -91,11 +85,12 @@ def build_graph(
     llm_with_tools = llm.bind_tools(tools) if tools else llm
 
     def worker(state: State) -> dict:
-        # Rebuild the system message each turn so the criterion + latest feedback
-        # are always current (replace the existing one if present).
+        # The system message is rebuilt each turn but never changes within a run.
         system = _worker_system_prompt(spec, state)
         msgs = [m for m in state["messages"] if not isinstance(m, SystemMessage)]
         msgs = [SystemMessage(content=system), *msgs]
+        # Breakpoints go on copies at call time, so they never reach the checkpoint.
+        msgs = with_cache_markers(llm.model, msgs)
         return {"messages": [llm_with_tools.invoke(msgs)]}
 
     def worker_router(state: State) -> str:
@@ -128,5 +123,5 @@ def build_graph(
     )
     builder.add_edge(START, "worker")
 
-    interrupt_before = ["tools"] if spec.supervised else []
-    return builder.compile(checkpointer=checkpointer, interrupt_before=interrupt_before)
+    # Every run stops before tools; the step loop auto-continues unattended ones.
+    return builder.compile(checkpointer=checkpointer, interrupt_before=["tools"])

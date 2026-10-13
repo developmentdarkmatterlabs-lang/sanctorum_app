@@ -41,6 +41,8 @@ router.patch('/', async (req, res) => {
   }
   if (Number.isFinite(req.body?.maxRunsPerTree)) patch.maxRunsPerTree = req.body.maxRunsPerTree;
   if (Number.isFinite(req.body?.maxCostPerTree)) patch.maxCostPerTree = req.body.maxCostPerTree;
+  if (Number.isFinite(req.body?.maxStepsPerRun)) patch.maxStepsPerRun = req.body.maxStepsPerRun;
+  if (typeof req.body?.dedupeReads === 'boolean') patch.dedupeReads = req.body.dedupeReads;
   try {
     res.json(await updateSettings(patch));
   } catch (error) {
