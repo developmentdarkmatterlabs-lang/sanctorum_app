@@ -23,6 +23,9 @@ Seat AI agents in an org chart, and every tool, folder and budget they get follo
   <a href="#features"><b>Features</b></a> ·
   <a href="#sanctorum-vs-the-field"><b>Compare</b></a>
 </p>
+# Sanctorum - Pixel Agents
+
+**An agent operating system where capability is granted by organizational position, not by code.**
 
 Sanctorum is a supervised multi-agent orchestration platform with role-based access control. You
 create *roles*, seat *agents* into them, and each agent's real capability — which tools it may call,
