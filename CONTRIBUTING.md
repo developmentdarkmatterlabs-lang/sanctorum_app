@@ -7,8 +7,9 @@ repository.
 
 ## How changes land here
 
-Development happens on `master`. Releases are built by GitHub Actions when a
-`v*` tag is pushed (see [.github/workflows/release.yml](.github/workflows/release.yml)).
+Development happens on `dev`, and pull requests go into `main`. Releases are
+tagged from `main`: pushing a `v*` tag builds them with GitHub Actions (see
+[.github/workflows/release.yml](.github/workflows/release.yml)).
 Open an issue to discuss a larger change before starting it. Small fixes can go
 straight to a pull request. Maintainers at Dark Matter Labs, LLC review and
 merge every change.

@@ -13,7 +13,7 @@ Seat AI agents in an org chart, and every tool, folder and budget they get follo
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License: AGPL-3.0"></a>
   <a href="#getting-started"><img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey" alt="Platforms: Windows and macOS"></a>
-  <a href="https://github.com/ablancq95/sanctorum"><img src="https://img.shields.io/badge/source-GitHub-181717?logo=github" alt="Source on GitHub"></a>
+  <a href="https://github.com/developmentdarkmatterlabs-lang/sanctorum_app"><img src="https://img.shields.io/badge/source-GitHub-181717?logo=github" alt="Source on GitHub"></a>
 </p>
 
 <p align="center">

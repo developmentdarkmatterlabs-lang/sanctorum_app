@@ -62,7 +62,7 @@ _MAX_REDIRECTS = 5
 # Hacker News, docs.python.org and GitHub. Stack Overflow 403s BOTH strings —
 # that is Cloudflare fingerprinting, which no User-Agent fixes — so there is
 # nothing the browser disguise buys and a great deal it costs.
-_UA = "Sanctorum/1.0 (+https://github.com/ablancq95/sanctorum; agent fetch tool) httpx"
+_UA = "Sanctorum/1.0 (+https://github.com/developmentdarkmatterlabs-lang/sanctorum_app; agent fetch tool) httpx"
 
 # Content we can turn into text. Anything else (a PDF, an image, a zip) is
 # reported rather than decoded into mojibake.
