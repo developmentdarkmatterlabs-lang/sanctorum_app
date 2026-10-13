@@ -26,6 +26,7 @@ export function useModels() {
     setImageModel: useCallback((model: string) => modelService.setImageModel(model), []),
     setSpeechModel: useCallback((model: string) => modelService.setSpeechModel(model), []),
     setWebMode: useCallback((mode: WebMode) => modelService.setWebMode(mode), []),
+    setDedupeReads: useCallback((on: boolean) => modelService.setDedupeReads(on), []),
     setProviderKey: useCallback(
       (which: 'openrouterKey' | 'serperKey' | 'replicateKey', value: string) =>
         modelService.setProviderKey(which, value),
@@ -36,6 +37,7 @@ export function useModels() {
         maxDelegationDepth?: number;
         maxRunsPerTree?: number;
         maxCostPerTree?: number;
+        maxStepsPerRun?: number;
       }) => modelService.setLimits(patch),
       []
     ),

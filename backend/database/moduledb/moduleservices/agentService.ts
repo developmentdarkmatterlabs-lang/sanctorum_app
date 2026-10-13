@@ -33,6 +33,8 @@ export type AgentDTO = {
    *  delegates), or null = inherit the global ceiling. Enforced in
    *  runTreeService.checkBudget alongside the tree's own cap; the lower binds. */
   maxCost: number | null;
+  /** Tool steps without a check-in; replaces the global setting. Null = inherit. */
+  maxSteps: number | null;
   /** A real directory this agent works in instead of the default sandbox, or null.
    *  The "connect to a real folder" override. */
   workspaceDir: string | null;
@@ -87,6 +89,7 @@ const toDTO = (row: AgentRow): AgentDTO => ({
   personalityId: row.personalityId,
   webMode: row.webMode,
   maxCost: row.maxCost,
+  maxSteps: row.maxSteps,
   workspaceDir: row.workspaceDir,
   workspaceReadOnly: row.workspaceReadOnly,
   supervised: row.supervised,
@@ -196,6 +199,8 @@ export type UpdateAgentInput = {
   webMode?: string | null;
   /** USD ceiling for this agent's own subtree; null or 0 clears it (inherit). */
   maxCost?: number | null;
+  /** Tool steps without a check-in; null or 0 clears it (inherit). */
+  maxSteps?: number | null;
   /** A real directory to work in; '' or null clears it (back to the sandbox). */
   workspaceDir?: string | null;
   /** Read-only mount toggle for a real-folder workspace (default true). */
@@ -229,6 +234,7 @@ export async function updateAgent(
     personalityId,
     webMode,
     maxCost,
+    maxSteps,
     workspaceDir,
     ...rest
   } = input;
@@ -266,6 +272,16 @@ export async function updateAgent(
             maxCost === null || !Number.isFinite(Number(maxCost)) || Number(maxCost) <= 0
               ? null
               : Number(maxCost),
+        };
+  // Same reading as the budget: blank or non-positive inherits; capped like the global.
+  const maxStepsUpdate =
+    maxSteps === undefined
+      ? {}
+      : {
+          maxSteps:
+            maxSteps === null || !Number.isFinite(Number(maxSteps)) || Number(maxSteps) < 1
+              ? null
+              : Math.min(5000, Math.trunc(Number(maxSteps))),
         };
   // An empty workspaceDir clears the mount (back to the default sandbox).
   const workspaceUpdate =
@@ -306,6 +322,7 @@ export async function updateAgent(
       ...personalityUpdate,
       ...webModeUpdate,
       ...maxCostUpdate,
+      ...maxStepsUpdate,
       ...workspaceUpdate,
       ...(reseating ? { room, seat, ...seatLink } : {}),
       ...(rowOrder ? { rowOrder: JSON.stringify(rowOrder) } : {}),

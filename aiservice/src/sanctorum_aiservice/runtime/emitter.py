@@ -13,7 +13,7 @@ import datetime
 import httpx
 
 from ..config.settings import settings
-from .models import RuntimeEvent, RuntimeEventType
+from .models import RuntimeEvent, RuntimeEventType, UsageRecord
 
 
 class EventEmitter:
@@ -30,6 +30,7 @@ class EventEmitter:
         type_: RuntimeEventType,
         body: str | None = None,
         ref: str | None = None,
+        usage: dict | None = None,
     ) -> None:
         # Defense in depth: `body` is typed str, but a caller might hand us a
         # non-string (e.g. a reasoning model's block-list content). Coerce here so
@@ -43,6 +44,7 @@ class EventEmitter:
             type=type_,
             body=body,
             ref=ref,
+            usage=UsageRecord(**usage) if usage else None,
             at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         )
         try:

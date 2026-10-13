@@ -20,6 +20,10 @@ from pydantic import Field, create_model
 
 from ..runtime.models import ToolGrant
 from . import files, search, shell
+from .read_cache import ReadCache
+
+# Tools that can change a file on disk; each one drops the read cache.
+_MUTATING = {"write_file", "edit_file", "run_command"}
 
 
 def _args_model(tool_name: str, params: dict[str, Any]):
@@ -460,8 +464,10 @@ class ToolExecutor:
         image_model: str | None = None,
         speech_model: str | None = None,
         cost_tracker: Any = None,
+        dedupe_reads: bool = False,
     ) -> None:
         self._grant = grant
+        self._reads = ReadCache() if dedupe_reads else None
         # The run's Serper key (from app settings), preferred by the search tool
         # over the service env. None -> search falls back to env.
         self._serper_key = serper_key
@@ -505,7 +511,11 @@ class ToolExecutor:
 
         wd = self._grant.workingDir
         try:
+            if self._reads is not None and name in _MUTATING:
+                self._reads.clear()
             if name == "read_file":
+                if self._reads is not None:
+                    return self._reads.read(wd, args["path"])
                 return files.read_file(wd, args["path"])
             if name == "list_dir":
                 return files.list_dir(wd, args.get("path", "."))

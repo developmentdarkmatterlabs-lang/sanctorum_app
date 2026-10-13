@@ -80,6 +80,8 @@ type Draft = {
   // because it is bound to a text input: '' is a meaningful state (inherit the
   // global ceiling) that a number cannot express without conflating it with 0.
   maxCost: string;
+  // Step limit, as text for the same reason: '' means use the global setting.
+  maxSteps: string;
 };
 
 const toDraft = (p: RosterEntry): Draft => ({
@@ -96,6 +98,7 @@ const toDraft = (p: RosterEntry): Draft => ({
   personalityId: p.personalityId ?? '',
   webMode: p.webMode ?? '',
   maxCost: p.maxCost === null || p.maxCost === undefined ? '' : String(p.maxCost),
+  maxSteps: p.maxSteps === null || p.maxSteps === undefined ? '' : String(p.maxSteps),
 });
 
 /**
@@ -168,7 +171,7 @@ export default function AgentProfilePanel({
     setSaving(true);
     setError(null);
     try {
-      const { room, seat, maxCost, ...rest } = draft;
+      const { room, seat, maxCost, maxSteps, ...rest } = draft;
       // The budget is typed as text so '' can mean "inherit", but the API takes
       // a number or null. Anything blank or non-positive is null — the same
       // reading the server applies, kept in step here so the field clears
@@ -176,12 +179,15 @@ export default function AgentProfilePanel({
       const parsed = Number(maxCost);
       const budget: number | null =
         maxCost.trim() && Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+      const stepsParsed = Math.trunc(Number(maxSteps));
+      const steps: number | null =
+        maxSteps.trim() && Number.isFinite(stepsParsed) && stepsParsed >= 1 ? stepsParsed : null;
       // Only send room/seat when the desk actually moved, so an unrelated edit
       // never trips the reseat validation.
       const moved = room !== profile.room || seat !== profile.seat;
       const edit: AgentEdit = moved
-        ? { ...rest, maxCost: budget, room, seat }
-        : { ...rest, maxCost: budget };
+        ? { ...rest, maxCost: budget, maxSteps: steps, room, seat }
+        : { ...rest, maxCost: budget, maxSteps: steps };
       await onSave(agent.key, edit);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save.');
@@ -605,6 +611,26 @@ export default function AgentProfilePanel({
                           approval on writes or commands.
                         </p>
                       )}
+
+                      {/* Step limit — how long this agent may work before it asks you. */}
+                      <label className="mt-2 flex flex-col gap-1">
+                        <span className={labelClass}>Steps per run</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={5000}
+                          step={1}
+                          className={fieldClass}
+                          placeholder="use the global setting"
+                          value={draft.maxSteps}
+                          onChange={(e) => patch('maxSteps', e.target.value)}
+                        />
+                      </label>
+                      <p className="font-mono text-[10px] leading-relaxed text-[var(--content-tertiary)]">
+                        {Number(draft.maxSteps) >= 1
+                          ? `Pauses to ask you after ${Math.min(5000, Math.trunc(Number(draft.maxSteps)))} tool steps without a check-in. Replaces the global setting for this agent.`
+                          : 'Blank: uses the steps-per-run setting in Settings. Set a number to give this agent its own.'}
+                      </p>
 
                       {/* Trusted delegator — a SEPARATE trust decision from the one
                           above. Shown only for a leader that actually holds the

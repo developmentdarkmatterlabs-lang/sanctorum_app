@@ -57,7 +57,7 @@ const MAX_SEED_BYTES = 4 * 1024 * 1024;
 
 /** Tables that must be EMPTY in a shipped database: produced by using the app,
  *  never by seeding it. Checked by byte-scanning, then by row count. */
-const MUST_BE_EMPTY = ['Message', 'Thread', 'Run', 'Memory'];
+const MUST_BE_EMPTY = ['Message', 'Thread', 'Run', 'RunUsage', 'Memory'];
 
 const log = (msg) => console.log(`[seed] ${msg}`);
 

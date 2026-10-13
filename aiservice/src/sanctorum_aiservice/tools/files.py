@@ -32,6 +32,15 @@ def read_file(working_dir: str, path: str) -> str:
     return p.read_text(encoding="utf-8", errors="replace")
 
 
+def signature(working_dir: str, path: str) -> tuple[str, int, int] | None:
+    """(resolved path, mtime, size) of a readable file, or None if it is not one."""
+    p = _resolve(working_dir, path)
+    if not p.is_file():
+        return None
+    stat = p.stat()
+    return str(p), stat.st_mtime_ns, stat.st_size
+
+
 def list_dir(working_dir: str, path: str = ".") -> str:
     p = _resolve(working_dir, path)
     if not p.is_dir():

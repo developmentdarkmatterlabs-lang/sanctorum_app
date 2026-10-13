@@ -20,6 +20,7 @@ RuntimeEventType = Literal[
     # Phase 4 delegation:
     "delegated",  # this run handed work to one of its reports
     "reported",   # a child run's result coming back to its leader
+    "usage",      # one LLM call's tokens and cost; bookkeeping, never a chat line
     "done", "error",
 ]
 
@@ -97,6 +98,10 @@ class RunSpec(BaseModel):
     # against. None -> derived from the task. And the retry ceiling.
     successCriteria: Optional[str] = None
     maxAttempts: Optional[int] = None
+    # Tool steps this run may take without a check-in before it pauses. None = no limit.
+    maxSteps: Optional[int] = None
+    # Answer a repeat read of an unchanged file with a short note, not the file.
+    dedupeReads: Optional[bool] = False
     # Phase 3.6: provider API keys entered in the app's settings. Prefer these over
     # the service's own env keys. Only non-empty ones are sent.
     providerKeys: Optional["ProviderKeys"] = None
@@ -129,6 +134,16 @@ class ApprovalDecision(BaseModel):
     reportsReady: Optional[bool] = False
 
 
+class UsageRecord(BaseModel):
+    """One LLM call's tokens and cost. `cachedTokens` is part of `promptTokens`."""
+
+    model: str = ""
+    promptTokens: int = 0
+    completionTokens: int = 0
+    cachedTokens: int = 0
+    cost: float = 0.0
+
+
 class RuntimeEvent(BaseModel):
     """One event streamed back to Node, POSTed to /api/runtime/events."""
 
@@ -138,4 +153,5 @@ class RuntimeEvent(BaseModel):
     type: RuntimeEventType
     body: Optional[str] = None
     ref: Optional[str] = None
+    usage: Optional[UsageRecord] = None
     at: Optional[str] = None

@@ -23,6 +23,8 @@ type RunTreeProps = {
   /** Every run in the tree, oldest first (as the API serves it). */
   tree: RunNode[];
   totalCost: number;
+  /** Token totals across the tree; `cached` is the cached part of `prompt`. */
+  totalTokens: { prompt: number; completion: number; cached: number };
   live: boolean;
   loading: boolean;
   /** Resolve an agent key to a display name; falls back to the key. */
@@ -62,9 +64,24 @@ function ordered(tree: RunNode[]): RunNode[] {
   return out.length === tree.length ? out : tree;
 }
 
+/** 12345 -> "12.3k". */
+function compact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
+/** "12.3k in (45% cached) · 1.2k out", or '' before any usage is reported. */
+function tokenLine(prompt: number, completion: number, cached: number): string {
+  if (!prompt && !completion) return '';
+  const share = prompt > 0 && cached > 0 ? ` (${Math.round((cached / prompt) * 100)}% cached)` : '';
+  return `${compact(prompt)} in${share} · ${compact(completion)} out`;
+}
+
 export default function RunTree({
   tree,
   totalCost,
+  totalTokens,
   live,
   loading,
   nameFor,
@@ -86,6 +103,7 @@ export default function RunTree({
   };
   const rows = useMemo(() => ordered(tree), [tree]);
   const caps = tree[0];
+  const treeTokens = tokenLine(totalTokens.prompt, totalTokens.completion, totalTokens.cached);
 
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
@@ -99,6 +117,7 @@ export default function RunTree({
             ${totalCost.toFixed(4)}
             {caps && caps.maxCost > 0 ? ` / $${caps.maxCost.toFixed(2)}` : ' / unlimited'}
             {caps && caps.maxRuns > 0 ? ` · ${rows.length}/${caps.maxRuns} runs` : ''}
+            {treeTokens ? ` · ${treeTokens}` : ''}
           </span>
           {live && (
             <button
@@ -151,6 +170,9 @@ export default function RunTree({
                   </button>
                   <StatusPill status={run.status as RunStatus} compact />
                   <span className="ml-auto font-mono text-[10px] text-[var(--content-tertiary)]">
+                    {tokenLine(run.promptTokens, run.completionTokens, run.cachedTokens)}
+                  </span>
+                  <span className="font-mono text-[10px] text-[var(--content-tertiary)]">
                     ${run.cost.toFixed(4)}
                   </span>
                 </div>

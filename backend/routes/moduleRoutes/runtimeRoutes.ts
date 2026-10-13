@@ -8,12 +8,12 @@ import {
   sendMessage,
 } from '../../database/moduledb/moduleservices/inboxService';
 import { delegate } from '../../database/moduledb/moduleservices/delegationService';
-import { treeFor } from '../../database/moduledb/moduleservices/runTreeService';
+import { checkSpend, treeFor } from '../../database/moduledb/moduleservices/runTreeService';
 import {
   readMemoryForRun,
   writeMemoryForRun,
 } from '../../database/moduledb/moduleservices/memoryService';
-import type { ApprovalDecision, RuntimeEvent } from '../../runtime/AgentRuntime';
+import type { ApprovalDecision, RuntimeEvent, UsageRecord } from '../../runtime/AgentRuntime';
 
 const router = Router();
 
@@ -47,9 +47,27 @@ const EVENT_TYPES = [
   'awaiting_approval',
   'criteria',
   'evaluated',
+  'usage',
   'done',
   'error',
 ];
+
+/** Coerces an untrusted usage payload to non-negative numbers. */
+function parseUsage(raw: unknown): UsageRecord | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const u = raw as Record<string, unknown>;
+  const num = (v: unknown) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  return {
+    model: typeof u.model === 'string' ? u.model : '',
+    promptTokens: Math.trunc(num(u.promptTokens)),
+    completionTokens: Math.trunc(num(u.completionTokens)),
+    cachedTokens: Math.trunc(num(u.cachedTokens)),
+    cost: num(u.cost),
+  };
+}
 
 /** Webhook: ingest one RuntimeEvent from an out-of-process runtime. */
 router.post('/events', async (req, res) => {
@@ -64,6 +82,7 @@ router.post('/events', async (req, res) => {
     type: e.type,
     body: typeof e.body === 'string' ? e.body : undefined,
     ref: typeof e.ref === 'string' ? e.ref : undefined,
+    usage: parseUsage(e.usage),
   };
   try {
     const result = await ingestEvent(event);
@@ -194,6 +213,16 @@ router.post('/runs/:runId/memory/write', async (req, res) => {
   } catch (error) {
     console.error('POST /api/runtime/runs/:runId/memory/write failed:', error);
     res.status(500).json({ ok: false, error: 'Failed to write memory' });
+  }
+});
+
+/** Whether a run is still inside its cost ceilings; the AI service asks between steps. */
+router.get('/runs/:runId/spend', async (req, res) => {
+  try {
+    res.json(await checkSpend(req.params.runId));
+  } catch (error) {
+    console.error('GET /api/runtime/runs/:runId/spend failed:', error);
+    res.status(500).json({ error: 'Failed to check spend' });
   }
 });
 

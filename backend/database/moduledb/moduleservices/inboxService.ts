@@ -19,10 +19,12 @@ import {
 } from './personalityService';
 import { effectivePosition } from './positionResolve';
 import {
+  effectiveMaxSteps,
   finishRun,
   getRun,
   recordCost,
   recordRun,
+  recordUsage,
   setRunPending,
   trace,
 } from './runTreeService';
@@ -391,6 +393,8 @@ async function buildRunSpec(
   let agentSupervised = true;
   // Phase 4 — trusted delegator: this leader's `delegate` calls skip the pause.
   let agentTrustedDelegator = false;
+  // This agent's own step limit; null = the global setting.
+  let agentMaxSteps: number | null = null;
 
   let workspace: WorkspaceOverride | null = null;
   // External MCP servers assigned to the seat (Phase 3.7); ride the run.
@@ -413,6 +417,7 @@ async function buildRunSpec(
     if (agent) {
       agentSupervised = agent.supervised;
       agentTrustedDelegator = agent.trustedDelegator;
+      agentMaxSteps = agent.maxSteps;
     }
     // A real-folder mount overrides the sandbox working directory. Read-only by
     // default: the agent gets observe-only tools, so it can look but not touch.
@@ -560,6 +565,8 @@ async function buildRunSpec(
   // same reason — a model that talks is rarely one that reasons or draws.
   const speechModel = agentSpeechModel?.trim() || settings?.speechModel?.trim() || undefined;
 
+  const maxSteps = effectiveMaxSteps(agentMaxSteps, settings?.maxStepsPerRun ?? 200);
+
   // Provider keys from the settings panel ride the run; the AI service prefers
   // them over its own env. Only include non-empty ones.
   const keys = await getProviderKeys();
@@ -594,6 +601,9 @@ async function buildRunSpec(
     trustedDelegator: agentTrustedDelegator,
     ...(loop?.successCriteria?.trim() ? { successCriteria: loop.successCriteria.trim() } : {}),
     ...(loop?.maxAttempts ? { maxAttempts: loop.maxAttempts } : {}),
+    // 0 = unlimited, so it is simply left off the spec.
+    ...(maxSteps ? { maxSteps } : {}),
+    dedupeReads: settings?.dedupeReads ?? true,
     ...(Object.keys(providerKeys).length ? { providerKeys } : {}),
     ...(mcpServers.length ? { mcpServers } : {}),
   };
@@ -608,6 +618,12 @@ async function buildRunSpec(
 export async function ingestEvent(event: RuntimeEvent): Promise<{ ok: boolean; notFound?: boolean }> {
   const thread = await prisma.thread.findUnique({ where: { id: event.threadId } });
   if (!thread) return { ok: false, notFound: true };
+
+  // Bookkeeping only: never a chat line, and it must not clear a pause.
+  if (event.type === 'usage') {
+    if (event.runId && event.usage) await recordUsage(event.runId, event.usage);
+    return { ok: true };
+  }
 
   // Phase 4 — `Thread.activeRunId`/`pendingRunId` are SINGULAR, but a delegation
   // tree puts a leader AND its reports on one thread. Only the ROOT run may touch

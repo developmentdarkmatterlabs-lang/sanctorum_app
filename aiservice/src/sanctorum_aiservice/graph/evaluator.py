@@ -32,7 +32,11 @@ def _llm(spec: RunSpec) -> ChatLiteLLM:
     )
 
 
-def derive_criterion(spec: RunSpec) -> str:
+# Opens every retry message, so the evaluator can tell its own feedback from the user.
+RETRY_PREFIX = "Your previous attempt did NOT meet the success criteria."
+
+
+def derive_criterion(spec: RunSpec, tracker: Any = None) -> str:
     """One cheap LLM pass: turn the task into a single testable success criterion.
     Falls back to a generic criterion if the model output is unusable."""
     llm = _llm(spec).with_structured_output(CriterionOutput)
@@ -43,7 +47,8 @@ def derive_criterion(spec: RunSpec) -> str:
     )
     try:
         out: Any = llm.invoke(
-            [SystemMessage(content=system), HumanMessage(content=spec.task)]
+            [SystemMessage(content=system), HumanMessage(content=spec.task)],
+            config={"callbacks": [tracker]} if tracker else None,
         )
         crit = (getattr(out, "success_criteria", "") or "").strip()
         return crit or _fallback_criterion(spec.task)
@@ -63,7 +68,9 @@ def format_conversation(messages: list[Any]) -> str:
     lines = ["Conversation history:", ""]
     for m in messages:
         if isinstance(m, HumanMessage):
-            lines.append(f"User: {as_text(m.content)}")
+            text = as_text(m.content)
+            who = "Evaluator" if text.startswith(RETRY_PREFIX) else "User"
+            lines.append(f"{who}: {text}")
         elif isinstance(m, AIMessage):
             text = as_text(m.content) or "[tool use]"
             lines.append(f"Assistant: {text}")
@@ -103,11 +110,24 @@ def make_evaluator(spec: RunSpec):
         result: Any = llm.invoke(
             [SystemMessage(content=system), HumanMessage(content=user)]
         )
-        return {
+        attempts = state.get("attempts", 0) + 1
+        update: dict = {
             "feedback_on_work": result.feedback,
             "success_criteria_met": result.success_criteria_met,
             "user_input_needed": result.user_input_needed,
-            "attempts": state.get("attempts", 0) + 1,
+            "attempts": attempts,
         }
+        retry = (
+            not result.success_criteria_met
+            and not result.user_input_needed
+            and attempts < state.get("max_attempts", 3)
+        )
+        if retry:
+            # Feedback arrives as a message, so the system prompt (and its cache) stays fixed.
+            note = f"{RETRY_PREFIX} Feedback:\n{result.feedback}\n\nRevise your work to address it."
+            if spec.personaReminder:
+                note += f"\n\n{spec.personaReminder}"
+            update["messages"] = [HumanMessage(content=note)]
+        return update
 
     return evaluator

@@ -8,7 +8,7 @@ The flow, for a supervised run:
       again (next tool) or finishes;
     - stop    -> abandon the run;
     - edit    -> replace the pending step with a fresh instruction, then resume.
-Hands-off runs never interrupt, so `start` drives straight to the finish.
+Hands-off runs stop there too but auto-continue, until a step or cost limit asks for a check-in.
 
 We keep a small registry of in-flight runs (their compiled graph + config +
 emitter) so a decision can resume the right one. LangGraph's checkpointer holds
@@ -22,6 +22,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
+import httpx
 from langchain_core.messages import HumanMessage, ToolMessage
 
 from ..config.settings import settings
@@ -100,9 +101,41 @@ class _Run:
     # DROPPED rather than queued, because queueing would just run the same stale
     # approval a moment later.
     stepping: bool = field(default=False)
+    # Tool steps taken without a human since the last check-in; the step limit counts these.
+    auto_steps: int = field(default=0)
+    # Why the run is paused: 'approval', 'steps' or 'cost'.
+    pause_kind: str = field(default="")
+    # Set once a human approves past a cost ceiling, so the run stops re-asking every step.
+    spend_approved: bool = field(default=False)
 
 
 _runs: dict[str, _Run] = {}
+
+
+def _config(spec: RunSpec) -> dict:
+    """The graph config for a run, keyed to its checkpoint thread."""
+    return {"configurable": {"thread_id": spec.runId}}
+
+
+async def _spend_check(run_id: str) -> str | None:
+    """Why this run is over a cost ceiling, or None. Fails open if Node is unreachable."""
+    url = f"{settings.backend_url.rstrip('/')}/api/runtime/runs/{run_id}/spend"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            data = (await client.get(url)).json()
+    except Exception:  # noqa: BLE001 — accounting never breaks a run
+        return None
+    if isinstance(data, dict) and data.get("ok") is False:
+        return str(data.get("reason") or "a cost ceiling was reached.")
+    return None
+
+
+async def _pause(run: _Run, kind: str, body: str) -> None:
+    """Persist the run and ask the user to decide; `kind` records why it stopped."""
+    save_manifest(run.spec.runId, run.spec.model_dump_json())
+    run.pause_kind = kind
+    trace(run.spec.runId, "PAUSE", f"{kind}: {body[:80]}")
+    await run.emitter.emit("awaiting_approval", body=body)
 
 
 async def _rebuild_run(run_id: str) -> _Run | None:
@@ -114,7 +147,7 @@ async def _rebuild_run(run_id: str) -> _Run | None:
     if not spec_json:
         return None
     spec = RunSpec.model_validate_json(spec_json)
-    config = {"configurable": {"thread_id": spec.runId}}
+    config = _config(spec)
     emitter = EventEmitter(spec.runId, spec.threadId, spec.agentKey)
     # The tracker is built FIRST so `generate_image` can report into the very
     # instance that rides `done` — a second tracker would meter into a total
@@ -204,6 +237,12 @@ def _msg_count(graph: Any, config: dict) -> int:
     return len(state.values.get("messages", []))
 
 
+async def _report_usage(run: _Run) -> None:
+    """Emit one `usage` event per LLM call metered since the last report."""
+    for record in run.cost.drain():
+        await run.emitter.emit("usage", usage=record)
+
+
 async def _surface_evaluation(run: _Run) -> None:
     """Emit an `evaluated` event for each grade the evaluator produced since we
     last looked, so the loop is visible: pass/fail, the feedback, and whether a
@@ -254,21 +293,20 @@ async def start(spec: RunSpec, emitter: EventEmitter) -> None:
         await emitter.emit("error", body=f"could not prepare workspace: {exc}")
         return
 
+    # Built first so every call is metered, the criterion pass included, and so
+    # `generate_image` reports into the same instance that rides `done`.
+    cost = CostTracker()
+
     # The bar the worker aims at: user-supplied if given, else derived from the
     # task (one cheap LLM pass). Surfaced so the user sees what it's judged against.
     criterion = (spec.successCriteria or "").strip()
     if not criterion:
-        criterion = await asyncio.to_thread(derive_criterion, spec)
+        criterion = await asyncio.to_thread(derive_criterion, spec, cost)
     max_attempts = spec.maxAttempts or 3
     await emitter.emit("criteria", body=criterion)
 
-    # Built BEFORE the graph so `generate_image` reports into the very instance
-    # that rides `done`. A tool making its own provider call is invisible to the
-    # LangChain callback, so without this the image spend escapes the tree's cost
-    # ceiling entirely — which is the failure the ceiling exists to prevent.
-    cost = CostTracker()
     graph = await _build_with_mcp(spec, emitter, cost)
-    config = {"configurable": {"thread_id": spec.runId}}
+    config = _config(spec)
     run = _Run(graph=graph, config=config, emitter=emitter, spec=spec, cost=cost)
     _runs[spec.runId] = run
 
@@ -354,8 +392,13 @@ def _explain(exc: Exception, spec: RunSpec) -> str:
 
 async def _advance(run: _Run, graph_input: Any) -> None:
     """Run the graph from the given input (initial state, or None to resume),
-    then pause at the next interrupt, auto-run a safe step, or finish. Loops so
-    consecutive auto-approved steps flow without a round-trip to the user."""
+    then pause at the next interrupt, auto-run a step, or finish. Loops so
+    consecutive auto-approved steps flow without a round-trip to the user.
+
+    Every run stops before each tool step. An unattended run, or a read-only step
+    on the auto-approve list, continues on its own until the step limit or a cost
+    ceiling asks for a check-in.
+    """
     trace(run.spec.runId, "ADVANCE-enter", f"input={'initial' if graph_input is not None else 'resume'}")
     while True:
         # A hard cancel between steps abandons the run before doing more work.
@@ -373,10 +416,13 @@ async def _advance(run: _Run, graph_input: Any) -> None:
         try:
             await asyncio.to_thread(run.graph.invoke, graph_input, step_config)
         except Exception as exc:  # noqa: BLE001
+            # A failed step still spent tokens; report them before the error.
+            await _report_usage(run)
             await run.emitter.emit("error", body=f"run failed: {_explain(exc, run.spec)}")
             _finish(run.spec.runId)
             return
 
+        await _report_usage(run)
         trace(run.spec.runId, "STEP-done", f"msgs {before}->{_msg_count(run.graph, run.config)}")
         await _drain_after_step(run, before)
         await _surface_evaluation(run)
@@ -409,22 +455,34 @@ async def _advance(run: _Run, graph_input: Any) -> None:
             _finish(run.spec.runId)
             return
 
-        if _all_auto_approved(pending, run.spec):
-            # Selective supervision: every proposed call is read-only, so run it
-            # without pausing. Note it, then loop to resume (graph_input=None).
-            step = "; ".join(_terminal_line_for_tool_call(tc) for tc in pending)
-            await run.emitter.emit("status", body=f"auto-approved (read-only): {step}")
-            graph_input = None
-            continue
-
-        # A consequential step: persist the manifest so a restart can rehydrate,
-        # then describe the proposed step and wait for the user's decision.
-        save_manifest(run.spec.runId, run.spec.model_dump_json())
         step = "; ".join(_terminal_line_for_tool_call(tc) for tc in pending)
-        names = ",".join(tc.get("name", "?") for tc in pending)
-        trace(run.spec.runId, "PAUSE", f"awaiting approval: {names}")
-        await run.emitter.emit("awaiting_approval", body=step)
-        return
+
+        # The cost ceiling is checked between steps, so it binds inside a run too.
+        if not run.spend_approved:
+            over = await _spend_check(run.spec.runId)
+            if over:
+                await _pause(run, "cost", f"{over} Proceed to keep going. Next: {step}")
+                return
+
+        # A consequential step on a supervised run waits for the user's decision.
+        if run.spec.supervised and not _all_auto_approved(pending, run.spec):
+            await _pause(run, "approval", step)
+            return
+
+        # An unattended step. Past the step limit, pause and ask instead of failing.
+        limit = run.spec.maxSteps or 0
+        if limit and run.auto_steps >= limit:
+            await _pause(
+                run,
+                "steps",
+                f"reached {limit} steps without a check-in. Proceed to allow {limit} more. Next: {step}",
+            )
+            return
+        run.auto_steps += 1
+        label = f"auto-approved (read-only): {step}" if run.spec.supervised else step
+        await run.emitter.emit("status", body=label)
+        graph_input = None
+        continue
 
 
 async def decide(
@@ -479,6 +537,12 @@ async def decide(
 
     if reports_ready:
         run.awaiting_reports = False
+    else:
+        # A human check-in: restart the step count, and accept the spend if they were asked about it.
+        run.auto_steps = 0
+        if run.pause_kind == "cost":
+            run.spend_approved = True
+    run.pause_kind = ""
 
     if decision == "edit" and edited:
         # The graph is parked before `tools`, so the last message is an AI turn
@@ -536,8 +600,10 @@ async def cancel(run_id: str) -> None:
         if run is None:
             return
     run.cancelled = True
-    # A run parked at a pause won't reach the loop's cancel check on its own, so
-    # finalize it directly. A mid-flight run will see the flag at its next step.
+    # A run mid-step sees the flag at its next step boundary and finalizes itself.
+    if run.stepping:
+        return
+    # A run parked at a pause won't reach the loop's cancel check, so finalize it here.
     state = run.graph.get_state(run.config)
     if state.next:  # still has pending work (paused before a node)
         await run.emitter.emit("status", body="run stopped by user.")
