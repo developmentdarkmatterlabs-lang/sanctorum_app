@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sanctorum — User Manual</title>
+<link rel="stylesheet" href="sanctorum_manual.css">
+</head>
+<body>
+
+<!-- ================================================================ cover -->
+<section class="cover">
+  <div class="art"><img src="images/cover.webp" alt=""></div>
+  <h1>Sanctorum</h1>
+  <p class="tagline">A tower of agents, connected by portals.</p>
+  <div class="cast">
+    <span><img src="images/portrait-aeon.webp" alt=""></span>
+    <span><img src="images/portrait-magician.webp" alt=""></span>
+    <span class="on"><img src="images/portrait-wizard.webp" alt=""></span>
+    <span><img src="images/portrait-uriel.webp" alt=""></span>
+    <span><img src="images/portrait-reddragon.webp" alt=""></span>
+  </div>
+  <div class="edition">User manual · Version 0.1.0</div>
+  <div class="maker">Dark Matter Labs, LLC</div>
+</section>
+
+<!-- ================================================================ contents -->
+<section class="contents">
+  <h2>Contents</h2>
+  <ol>
+    <li class="toc-part">Start here</li>
+    <li><span class="n">01</span><a href="#welcome">Welcome</a></li>
+    <li><span class="n">02</span><a href="#installing">Installing and opening Sanctorum</a></li>
+    <li><span class="n">03</span><a href="#tour">A tour of the window</a></li>
+
+    <li class="toc-part">The organisation</li>
+    <li><span class="n">04</span><a href="#building">The building</a> <span class="sub">· Floors, portals and the floor editor</span></li>
+    <li><span class="n">05</span><a href="#agents">Agents</a> <span class="sub">· Adding agents and moving them around</span></li>
+    <li><span class="n">06</span><a href="#dossier">The dossier</a> <span class="sub">· Who an agent is, and what it may do</span></li>
+    <li><span class="n">07</span><a href="#teams">Teams and seats</a></li>
+    <li><span class="n">08</span><a href="#roles">Roles</a></li>
+    <li><span class="n">09</span><a href="#personalities">Personalities</a></li>
+    <li><span class="n">10</span><a href="#skills">Skills, rules and MCP servers</a></li>
+
+    <li class="toc-part">Work</li>
+    <li><span class="n">11</span><a href="#tasks">Giving an agent a task</a> <span class="sub">· Messages, the terminal and grading</span></li>
+    <li><span class="n">12</span><a href="#approvals">Approvals and limits</a></li>
+    <li><span class="n">13</span><a href="#delegation">Delegation</a></li>
+    <li><span class="n">14</span><a href="#memory">Memory</a></li>
+    <li><span class="n">15</span><a href="#web">The web, images and speech</a></li>
+    <li><span class="n">16</span><a href="#fleet">The fleet and announcements</a></li>
+
+    <li class="toc-part">Settings and reference</li>
+    <li><span class="n">17</span><a href="#settings">Settings</a></li>
+    <li><span class="n">18</span><a href="#clearance">Clearance reference</a></li>
+    <li><span class="n">19</span><a href="#costs">What it costs</a></li>
+    <li><span class="n">20</span><a href="#privacy">Your data and privacy</a></li>
+    <li><span class="n">21</span><a href="#troubleshooting">Tips and troubleshooting</a></li>
+  </ol>
+</section>
+
+<!-- ================================================================ 1 -->
+<section class="chapter" id="welcome">
+  <span class="kicker">Chapter 1 · Start here</span>
+  <h2>Welcome</h2>
+  <p>Sanctorum is an office of AI agents that you run on your own computer. You build an organisation: floors, teams, roles and the seats inside them. Then you seat agents in it, give them work, and watch them do it.</p>
+  <p>The idea that sets Sanctorum apart is that <strong>an agent's power comes from its seat, not from what it is told</strong>. Which tools an agent may use, which folders it may touch and what it may spend all follow from the chair it holds in the organisation. The limits are enforced by the app itself, outside the AI model, so no message can talk an agent past them.</p>
+  <ul>
+    <li><strong>Seats grant capability.</strong> Each seat holds a role, and each role carries a clearance. The clearance decides the tools: an intern's seat can read, a lead's seat can delegate.</li>
+    <li><strong>Leaders delegate downward.</strong> A team's leader can hand pieces of a task to the people in its team, and each of them works at their own clearance, never the leader's.</li>
+    <li><strong>You stay in charge.</strong> A supervised agent waits for your approval before every step. An unattended one still stops to ask at its step limit and its cost ceiling.</li>
+    <li><strong>You see everything.</strong> Every agent has a live terminal, every task a tree of the runs it started, and every run what it cost.</li>
+  </ul>
+  <p>Sanctorum uses AI models through <strong>OpenRouter</strong>, with your own key, so you choose the models and pay the providers directly. It starts with a cast of fifteen agents, eleven floors, two teams and a library of over two hundred professional roles, ready to rearrange.</p>
+</section>
+
+<!-- ================================================================ 2 -->
+<section class="chapter" id="installing">
+  <span class="kicker">Chapter 2 · Start here</span>
+  <h2>Installing and opening Sanctorum</h2>
+  <p>Sanctorum is a desktop app for Windows and macOS. Everything it needs, including its AI service, is in the installer.</p>
+
+  <h3>Requirements</h3>
+  <table>
+    <tr><th>Windows</th><td>Windows 10 or 11, 64-bit (x64)</td></tr>
+    <tr><th>macOS</th><td>macOS 10.15 Catalina or later, on Apple Silicon (M1 and later) or Intel</td></tr>
+    <tr><th>Internet</th><td>Needed for the AI models, web search and the model list</td></tr>
+    <tr><th>An OpenRouter key</th><td>From <a href="https://openrouter.ai/keys">openrouter.ai/keys</a>, with credit on the account</td></tr>
+  </table>
+
+  <h3>Installing</h3>
+  <h4>Windows</h4>
+  <p>Run <code>Sanctorum-Setup-0.1.0.exe</code>. The installer asks where to install and adds Desktop and Start menu shortcuts. It installs for your user only, so it needs no administrator rights.</p>
+  <p>The installer isn't code-signed yet, so Windows may show <em>Windows protected your PC</em>. Click <span class="btn">More info</span>, then <span class="btn">Run anyway</span>.</p>
+  <h4>macOS</h4>
+  <p>Open the disk image for your Mac: <code>arm64</code> for Apple Silicon, <code>x64</code> for Intel. Drag <strong>Sanctorum</strong> onto <strong>Applications</strong>.</p>
+  <p>If you downloaded it in a browser, macOS may refuse to open it the first time, because it isn't notarised yet. Open <strong>System Settings → Privacy &amp; Security</strong> and click <span class="btn">Open Anyway</span>, or right-click the app in Applications and choose <strong>Open</strong>.</p>
+
+  <h3>The first time you open it</h3>
+  <figure>
+    <img src="images/entrance.webp" alt="">
+    <figcaption>The entrance. Enter the office to start.</figcaption>
+  </figure>
+  <p>On the first launch Sanctorum creates your organisation: the floors, the role library and the starting cast. Click <span class="btn lit">Enter the office →</span> to go in.</p>
+  <ol>
+    <li>Open <span class="btn">settings…</span> and paste your OpenRouter key under <strong>Provider API keys</strong>, then click <span class="btn">save</span>.</li>
+    <li>Under <strong>Default model</strong>, pick the model your agents will think with. It must support tools: look for the <code>tools</code> badge.</li>
+    <li>Close Settings, click an agent's <span class="btn lit">message</span>, and give it something to do.</li>
+  </ol>
+  <div class="note"><p>Sanctorum keeps your organisation in its own folder on your computer, so uninstalling it doesn't remove your work. See <a href="#privacy">Your data and privacy</a>.</p></div>
+</section>
+
+<!-- ================================================================ 3 -->
+<section class="chapter" id="tour">
+  <span class="kicker">Chapter 3 · Start here</span>
+  <h2>A tour of the window</h2>
+  <figure>
+    <img src="images/office.webp" alt="">
+    <figcaption>The office: the toolbar along the top, the floor in the middle, and the agents and activity on the right.</figcaption>
+  </figure>
+  <h3>The title bar</h3>
+  <p>The window's own title bar holds the usual minimise, maximise and close buttons. When an agent is waiting for your decision, a waiting light appears here, along with what the current task has spent so far, so you can see both from anywhere in the app.</p>
+
+  <h3>The toolbar</h3>
+  <table>
+    <thead><tr><th>Control</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><span class="btn">Exit</span></td><td>Back to the entrance.</td></tr>
+      <tr><td><span class="btn">edit</span></td><td>Edits the floor you're on: its tiles, furniture and desks. See <a href="#building">The building</a>.</td></tr>
+      <tr><td><strong>Floor</strong></td><td>Switches the floor you're looking at.</td></tr>
+      <tr><td><span class="btn">floors…</span></td><td>Adds, renames, reorders and removes floors. It appears while you're editing.</td></tr>
+      <tr><td><span class="btn">teams…</span> <span class="btn">roles…</span></td><td>The organisation: teams and their seats, and the role library.</td></tr>
+      <tr><td><span class="btn">skills…</span> <span class="btn">mcps…</span> <span class="btn">rules…</span> <span class="btn">voices…</span></td><td>Skills, MCP servers, standing rules and personalities.</td></tr>
+      <tr><td><span class="btn">fleet…</span></td><td>Every agent at a glance, and the delegation trees.</td></tr>
+      <tr><td><span class="btn">settings…</span></td><td>Models, keys, limits, web access and announcements.</td></tr>
+      <tr><td><span class="btn">inbox</span></td><td>Your conversations with agents. A number shows unread replies.</td></tr>
+      <tr><td><span class="btn">1×</span> <span class="btn">2×</span></td><td>How fast the agents walk.</td></tr>
+      <tr><td><span class="btn">auto: on</span></td><td>When on, idle agents wander, take breaks and visit other floors by themselves. Agents that are working always stay at their desks.</td></tr>
+    </tbody>
+  </table>
+  <p>The number beside the speed buttons is the zoom. Scroll over the floor to zoom in and out.</p>
+
+  <h3>The floor and the agents panel</h3>
+  <p>The middle of the window is the floor you're on, drawn in pixel art. Each character is an agent. On the right, the <strong>Agents</strong> panel lists every agent with its floor and what it's doing, and the <strong>Activity</strong> log below it narrates what happens in the building.</p>
+</section>
+
+<!-- ================================================================ 4 -->
+<section class="chapter" id="building">
+  <span class="kicker">Chapter 4 · The organisation</span>
+  <h2>The building</h2>
+  <p class="subtitle">Floors, portals and the floor editor</p>
+  <p>Sanctorum is a tower. It starts with eleven floors, and every floor has desks where agents sit and a portal that leads to the next floor. Teams have a home floor, and agents walk to their own desks to work.</p>
+  <div class="floors">
+    <figure><img src="images/floor-1.webp" alt=""><figcaption><b>1</b> · HQ</figcaption></figure>
+    <figure><img src="images/floor-2.webp" alt=""><figcaption><b>2</b> · IT</figcaption></figure>
+    <figure><img src="images/floor-3.webp" alt=""><figcaption><b>3</b> · Finance</figcaption></figure>
+    <figure><img src="images/floor-4.webp" alt=""><figcaption><b>4</b> · Marketing</figcaption></figure>
+    <figure><img src="images/floor-5.webp" alt=""><figcaption><b>5</b> · Cafeteria</figcaption></figure>
+    <figure><img src="images/floor-6.webp" alt=""><figcaption><b>6</b> · Gaming Room</figcaption></figure>
+    <figure><img src="images/floor-7.webp" alt=""><figcaption><b>7</b> · Library</figcaption></figure>
+    <figure><img src="images/floor-8.webp" alt=""><figcaption><b>8</b> · Reception</figcaption></figure>
+    <figure><img src="images/floor-9.webp" alt=""><figcaption><b>9</b> · Dungeon</figcaption></figure>
+    <figure><img src="images/floor-10.webp" alt=""><figcaption><b>10</b> · Cave</figcaption></figure>
+    <figure><img src="images/floor-11.webp" alt=""><figcaption><b>11</b> · Hell</figcaption></figure>
+  </div>
+
+  <div class="side-group">
+  <h3>Managing floors</h3>
+  <figure class="panel side">
+    <img src="images/floors.webp" alt="">
+    <figcaption>The Floors window: the tower in the order its portals follow.</figcaption>
+  </figure>
+  <p>While you're editing a floor (below), the toolbar shows <span class="btn">floors…</span>. Open it to add a floor with <span class="btn">+ add floor</span>, rename one, or change their order. The portal on each floor leads to the next one in this order, and the last leads back to the first. A floor with agents on it can't be deleted: move them off first.</p>
+
+  </div>
+  <h3>Editing a floor</h3>
+  <figure>
+    <img src="images/floor-editor.webp" alt="">
+    <figcaption>Editing a floor: the tools along the top and the palette on the right.</figcaption>
+  </figure>
+  <p>Click <span class="btn">edit</span> to change the floor you're on. The toolbar switches to the editor's tools:</p>
+  <table>
+    <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><span class="btn">paint</span></td><td>Places what you pick in the palette. <strong>Tiles</strong> are cosmetic and don't block movement. <strong>Props</strong> are furniture and do block it; a placement that would cut part of the floor off is shown in red and refused.</td></tr>
+      <tr><td><span class="btn">seats</span></td><td>Places desks, the seats agents sit at.</td></tr>
+      <tr><td><span class="btn">block</span></td><td>Paints invisible walls: click a tile to block it, click again to clear it.</td></tr>
+      <tr><td><span class="btn">erase</span></td><td>Removes what you click.</td></tr>
+    </tbody>
+  </table>
+  <p>The rotate button turns the piece you're placing. While the editor is on, the button reads <span class="btn lit">editing</span>: click it again to leave.</p>
+</section>
+
+<!-- ================================================================ 5 -->
+<section class="chapter" id="agents">
+  <span class="kicker">Chapter 5 · The organisation</span>
+  <h2>Agents</h2>
+  <p class="subtitle">Adding agents and moving them around</p>
+  <p>Every agent has a card in the <strong>Agents</strong> panel: its portrait, name, floor and what it's doing right now, such as <em>idle</em>, <em>walking</em> or <em>working</em>. Type in <strong>Search agents…</strong> to find one by name, floor or status.</p>
+
+  <h3>The agent card</h3>
+  <table>
+    <thead><tr><th>Button</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><span class="btn">desk</span></td><td>Sends the agent back to its desk.</td></tr>
+      <tr><td><span class="btn">wander</span></td><td>Lets it walk around the floor.</td></tr>
+      <tr><td><span class="btn">portal</span></td><td>Sends it through the portal to the next floor.</td></tr>
+      <tr><td><span class="btn lit">message</span></td><td>Opens your conversation with it in the inbox.</td></tr>
+      <tr><td><span class="btn">&gt;_</span></td><td>Opens its live terminal.</td></tr>
+    </tbody>
+  </table>
+  <p>Click a card or a character to select it and open its dossier. With an agent selected, click any free tile to send it there.</p>
+
+  <div class="side-group">
+  <h3>Adding an agent</h3>
+  <figure class="panel side">
+    <img src="images/new-agent.webp" alt="">
+    <figcaption>The New agent form.</figcaption>
+  </figure>
+  <p>Click <span class="btn">+ add</span> above the agents list. Give the agent a <strong>Name</strong>, choose its <strong>Floor</strong> and a free <strong>Seat</strong>, and fill in the details that make up its dossier: title, tagline, role, data type, tenure, focus and its responsibilities, one per line.</p>
+  <p>Every agent needs two pictures:</p>
+  <ul>
+    <li><strong>A sprite sheet</strong>, 192 × 192 pixels: four frames of walking, in four rows of 48-pixel squares. Under <em>Which way does each row walk?</em>, tell Sanctorum which row faces down, right, up and left.</li>
+    <li><strong>A portrait</strong>, as PNG or JPG, for its card and dossier.</li>
+  </ul>
+  <p>Click <span class="btn">Add agent</span>. A new agent has no seat, and an agent without a seat has no standing access: give it one in its dossier or in <a href="#teams">Teams</a> before you give it work.</p>
+  <h4>Removing an agent</h4>
+  <p>Open its dossier, click <span class="btn">remove agent</span> at the bottom, and confirm.</p>
+  </div>
+</section>
+
+<!-- ================================================================ 6 -->
+<section class="chapter" id="dossier">
+  <span class="kicker">Chapter 6 · The organisation</span>
+  <h2>The dossier</h2>
+  <p class="subtitle">Who an agent is, and what it may do</p>
+  <p>Click an agent's card or its character to open its dossier on the left. The top describes who the agent is. Further down are the settings that decide how it works.</p>
+  <div class="pair">
+    <figure>
+      <img src="images/dossier.webp" alt="">
+      <figcaption>Who Alden is: an Archmage holding the Engineering Lead seat.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/dossier-settings.webp" alt="">
+      <figcaption>How Alden works: model, workspace, personality and web access.</figcaption>
+    </figure>
+  </div>
+
+  <h3>Identity</h3>
+  <p>The portrait, title and tagline are the agent's own. So is its <strong>Profession</strong>, but the profession is only a label. It changes nothing about what the agent may do.</p>
+  <p><strong>Clearance</strong> is read-only, because it comes from the seat the agent holds. The dossier says where it comes from, for example <em>inherited from role "Engineering Lead"</em>. To change an agent's clearance, give it a different seat, or change the seat or its role in <a href="#teams">Teams</a>.</p>
+  <p><strong>Data type</strong> is the other half: clearance decides what an agent may <em>do</em>, and data type what it may <em>know</em>. An agent only reads memory entries at or below its own data type. <strong>Tenure</strong> and <strong>Focus</strong> describe the agent.</p>
+  <p><strong>Floor</strong> and <strong>Seat</strong> choose its desk, and the position list seats it in a team, or puts it on the <em>bench</em> with no position.</p>
+
+  <h3>How it works</h3>
+  <table>
+    <thead><tr><th>Setting</th><th>What it decides</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Model</strong></td><td>The AI model this agent thinks with. Click <span class="btn">choose…</span> to pick one; leave it on the global default otherwise. It must support tools.</td></tr>
+      <tr><td><strong>Workspace directory</strong></td><td>Blank, the agent works in a folder Sanctorum keeps for its floor, shared with the agents there. Set a real folder on your computer and it works there instead, <strong>read-only</strong> unless you untick that.</td></tr>
+      <tr><td><strong>Personality</strong></td><td>The voice it speaks in. See <a href="#personalities">Personalities</a>.</td></tr>
+      <tr><td><strong>Web access</strong></td><td>Text only, the browser, or both, overriding the global setting. See <a href="#web">The web</a>.</td></tr>
+      <tr><td><strong>Supervision</strong></td><td>Ticked, the agent asks your approval before every tool it uses. Unticked, it works unattended, still inside its clearance and workspace.</td></tr>
+      <tr><td><strong>Steps per run</strong></td><td>How many steps it may take without checking in with you. Blank uses the global setting.</td></tr>
+    </tbody>
+  </table>
+  <div class="note warn"><p>Giving an agent write access to a real folder lets it create and change your files there. Only allow it for a folder you intend the agent to change.</p></div>
+
+  <div class="side-group">
+  <h3>Leaders</h3>
+  <figure class="panel side">
+    <img src="images/dossier-leader.webp" alt="">
+    <figcaption>A leader's dossier: unattended, delegating without asking, with a budget of its own.</figcaption>
+  </figure>
+  <p>An agent in a leader seat with clearance 6 or more can delegate, and gets two more settings:</p>
+  <ul>
+    <li><strong>Let this leader delegate without asking</strong> skips your approval for handing out work. Every other step still follows its supervision setting, and all the limits still apply.</li>
+    <li><strong>Budget (USD)</strong> caps what this leader and everything it delegates may spend on one task. The global cost ceiling still applies, and the lower of the two wins.</li>
+  </ul>
+  <p>Below these, the dossier lists the <strong>Rules in effect</strong> for the seat, its <strong>Skills</strong> and <strong>MCP servers</strong>, and the agent's <strong>Responsibilities</strong>.</p>
+  </div>
+</section>
+
+<!-- ================================================================ 7 -->
+<section class="chapter" id="teams">
+  <span class="kicker">Chapter 7 · The organisation</span>
+  <h2>Teams and seats</h2>
+  <p>A team is a group of seats with a mission. Each seat holds a role, the role gives the seat its clearance, and the agent sitting in it works with that clearance. Open <span class="btn">teams…</span> to see them.</p>
+  <h3>A team</h3>
+  <ul>
+    <li><strong>Home floor</strong>: where the team works.</li>
+    <li><strong>Reports into</strong>: the team above it, or <em>top level</em>. The leader of the team above may delegate work to this team's leader.</li>
+    <li><strong>Mission</strong>: one line on what the team is for.</li>
+  </ul>
+  <div class="side-group">
+  <h3>Seats</h3>
+  <figure class="panel side">
+    <img src="images/teams.webp" alt="">
+    <figcaption>The Engineering team: Alden leads, four agents hold the other seats, and the team keeps a shared memory.</figcaption>
+  </figure>
+  <p>Each row is a seat:</p>
+  <ul>
+    <li><strong>The role</strong> it holds.</li>
+    <li><strong>Its clearance</strong>: <em>inherit</em> takes the role's, shown in brackets, or you can pick a level for this seat alone.</li>
+    <li><strong>The star</strong> makes the seat the team's leader. A team has one leader, marked <strong>LEADER</strong>.</li>
+    <li><span class="btn">assign</span> seats an agent; the cross beside its name unseats it.</li>
+    <li>The last cross removes the seat.</li>
+  </ul>
+  <p>To add a seat, choose a role under <strong>add a seat for…</strong> and click <span class="btn">+ add</span>. To start a team, fill in <strong>Name</strong> and <strong>Mission</strong> at the bottom and click <span class="btn">create</span>.</p>
+  </div>
+  <h3>Team memory</h3>
+  <p>Below its seats, each team shows its shared memory: what its agents have written down, and anything you add yourself. Type in <strong>Add a memory…</strong>, choose a <strong>Kind</strong> and a minimum clearance to read it (<strong>Clr</strong>), and click <span class="btn">add</span>. See <a href="#memory">Memory</a>.</p>
+</section>
+
+<!-- ================================================================ 8 -->
+<section class="chapter" id="roles">
+  <span class="kicker">Chapter 8 · The organisation</span>
+  <h2>Roles</h2>
+  <p>A role is a job, defined once and shared by every seat that holds it. Sanctorum starts with a library of over two hundred professional roles in disciplines from Engineering and Data to Finance, Legal and Writing. Open <span class="btn">roles…</span> to browse them.</p>
+  <figure class="panel">
+    <img src="images/roles.webp" alt="">
+    <figcaption>The role library, with Engineering Lead open.</figcaption>
+  </figure>
+  <p>The list shows each role's clearance and how many seats hold it. Search by title, discipline or description, and click a role to edit it:</p>
+  <table>
+    <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Title</strong></td><td>The job's name, shown on every seat that holds it.</td></tr>
+      <tr><td><strong>Discipline</strong></td><td>The group it's listed under. Type a new name to start a new group.</td></tr>
+      <tr><td><strong>Level (band)</strong></td><td>Its seniority, for your own reference.</td></tr>
+      <tr><td><strong>Default clearance</strong></td><td>The clearance every seat holding this role inherits.</td></tr>
+      <tr><td><strong>Description</strong></td><td>What the job is responsible for.</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><p>Editing a role changes every seat that holds it at once, except seats that chose their own clearance. That's the point: raise a role's clearance, and everyone in that job gets the new tools on their next task.</p></div>
+  <p>Click <span class="btn">+ new</span> to add a role. A role held by seats can't be deleted until those seats hold something else.</p>
+</section>
+
+<!-- ================================================================ 9 -->
+<section class="chapter" id="personalities">
+  <span class="kicker">Chapter 9 · The organisation</span>
+  <h2>Personalities</h2>
+  <p>A personality is the voice an agent speaks in. Unlike everything else about what an agent may do, it belongs to the agent, not to its seat: move an agent to another desk and it keeps its voice. Open <span class="btn">voices…</span> to see them.</p>
+  <figure class="panel">
+    <img src="images/personalities.webp" alt="">
+    <figcaption>Alden's personality.</figcaption>
+  </figure>
+  <table>
+    <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Name</strong> and <strong>Summary</strong></td><td>How the personality is listed.</td></tr>
+      <tr><td><strong>Voice</strong></td><td>How the character speaks and what it cares about. It's placed first in everything the agent is told.</td></tr>
+      <tr><td><strong>Identity stance</strong></td><td>How it answers "are you an AI?". Blank uses the default: say so plainly in one sentence and carry on in character.</td></tr>
+      <tr><td><strong>Enabled</strong></td><td>Untick to stop using it without deleting it.</td></tr>
+    </tbody>
+  </table>
+  <p>Assign a personality in the agent's dossier. A short reminder of the voice is repeated whenever the agent retries a task, so a long run doesn't drift back to the model's plain tone.</p>
+</section>
+
+<!-- ================================================================ 10 -->
+<section class="chapter" id="skills">
+  <span class="kicker">Chapter 10 · The organisation</span>
+  <h2>Skills, rules and MCP servers</h2>
+  <p>Three more things shape how agents work. Skills and MCP servers belong to seats, like clearance. Standing rules apply by scope, to everyone they cover.</p>
+
+  <h3>Skills</h3>
+  <figure class="panel">
+    <img src="images/skills.webp" alt="">
+    <figcaption>The Skills window, ready for a new skill.</figcaption>
+  </figure>
+  <p>A skill is a playbook for a kind of task: <em>when asked to review code, follow these steps</em>. Open <span class="btn">skills…</span>, click <span class="btn">+ new</span>, and give it a <strong>Name</strong>, a one-line <strong>Description</strong>, a <strong>Minimum clearance</strong>, and its <strong>Body</strong>, the steps themselves, which are given to the agent with every task.</p>
+  <p>Skills live on seats. Grant one in an agent's dossier, under <strong>Skills (on this seat)</strong>; whoever holds the seat has it.</p>
+
+  <h3>Standing rules</h3>
+  <figure class="panel">
+    <img src="images/rules.webp" alt="">
+    <figcaption>The Rules window.</figcaption>
+  </figure>
+  <p>A standing rule is how your organisation always works: <em>always answer in English</em>, <em>never delete files without asking</em>. Rules are given to every run they cover, ahead of the role and the skills.</p>
+  <ul>
+    <li><strong>Scope</strong>: <em>global</em> for every agent, <em>team</em> for one team, or <em>position</em> for one seat. Choose which under <strong>Applies to</strong>.</li>
+    <li><strong>Order</strong> sets where it appears among the others.</li>
+    <li><strong>Enabled</strong>: untick to pause a rule without deleting it.</li>
+  </ul>
+  <p>Each agent's dossier lists the rules in effect for its seat. The rules for one seat are capped at about 4,000 characters; past that, the most specific rules are dropped first, so global rules always apply.</p>
+
+  <h3>MCP servers</h3>
+  <figure class="panel">
+    <img src="images/mcps.webp" alt="">
+    <figcaption>The MCP servers window.</figcaption>
+  </figure>
+  <p>MCP servers give agents tools from outside Sanctorum: editing Office documents, querying a database, working with another service. Open <span class="btn">mcps…</span>, click <span class="btn">+ new</span>, and choose the <strong>Transport</strong>:</p>
+  <ul>
+    <li><strong>http (remote)</strong>: the <strong>Server URL</strong>, and the access token if it needs one.</li>
+    <li><strong>stdio (local, advanced)</strong>: the <strong>Command</strong> that starts the server on your computer, and its <strong>Args</strong>.</li>
+  </ul>
+  <p>Set a <strong>Min clearance</strong>, then grant the server on a seat in an agent's dossier, under <strong>MCPs (on this seat)</strong>. Its tools follow the same approvals as Sanctorum's own. If a server can't be reached, the run carries on without it.</p>
+  <div class="note warn"><p>Access tokens for MCP servers are stored on your computer without encryption, unlike your provider keys, and are never shown again after you save them.</p></div>
+
+  <h3>Trying a local server</h3>
+  <p>A good first server is the free <em>everything</em> test server, which has simple tools such as <code>echo</code>. It needs Node.js on your computer.</p>
+  <ol>
+    <li>Open <span class="btn">mcps…</span> and click <span class="btn">+ new</span>.</li>
+    <li>Enter the <strong>Name</strong> <code>everything</code> and choose the <strong>Transport</strong> <strong>stdio (local, advanced)</strong>.</li>
+    <li>Enter the <strong>Command</strong> <code>npx</code> and the <strong>Args</strong> <code>["-y","@modelcontextprotocol/server-everything"]</code>. Args are a list in square brackets, each part in quotes.</li>
+    <li>Leave <strong>Min clearance</strong> at <code>0</code>, keep <strong>Enabled</strong> ticked, and save.</li>
+    <li>Open the dossier of an agent that holds a seat, and add <strong>everything</strong> under <strong>MCPs (on this seat)</strong>.</li>
+    <li>Give the agent a task such as <em>Use the echo tool to say hello.</em></li>
+  </ol>
+  <p>The agent's terminal shows how it went:</p>
+  <table>
+    <thead><tr><th>Line</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>MCP tools available: echo, …</code></td><td>The server started, and the agent can use its tools.</td></tr>
+      <tr><td><code>MCP server 'everything' skipped: …</code></td><td>The server couldn't start or be reached. The rest of the line says why; the task carries on without it.</td></tr>
+      <tr><td><code>MCP tool 'echo' on server 'everything' failed: …</code></td><td>One call went wrong. The agent is told and can try another way.</td></tr>
+    </tbody>
+  </table>
+  <p>A supervised agent pauses before each call to the server, as for any other tool. A call that takes longer than two minutes is stopped, and the agent is told.</p>
+  <p>Sanctorum introduces itself to each server by name, so an app that lists or asks to allow connected apps shows it as <strong>Sanctorum</strong>.</p>
+  <div class="note"><p>A local server runs on your computer with your user account. It doesn't get your provider keys, but it can see where your user folders are. Only add servers you trust.</p></div>
+
+  <h3>Connecting another app</h3>
+  <p>Many apps can be worked by an AI assistant through MCP: design tools, 3D programs, music plugins, online services. You connect each one the same way.</p>
+  <ol>
+    <li><strong>Find the app's MCP setup.</strong> Look in its settings for <em>MCP</em>, <em>AI assistant</em> or <em>Connect Claude Desktop</em>. Most apps show a short block of setup text meant for Claude Desktop or another AI app. Sanctorum isn't listed there, but the same details work.</li>
+    <li><strong>Turn the setup into Sanctorum's fields.</strong> A local app's setup usually looks like this:
+<pre><code>"my-app": {
+  "command": "C:\\Program Files\\MyApp\\my-app-helper.exe",
+  "args": ["stdio"]
+}</code></pre>
+      In <span class="btn">mcps…</span>, click <span class="btn">+ new</span>, choose <strong>stdio (local, advanced)</strong>, and copy across:
+      <ul>
+        <li><strong>Name</strong>: the name before the colon, here <code>my-app</code>.</li>
+        <li><strong>Command</strong>: the <code>command</code>, written with single backslashes: <code>C:\Program Files\MyApp\my-app-helper.exe</code>. The setup text doubles them only because of how it's written. Spaces in the path are fine.</li>
+        <li><strong>Args</strong>: the <code>args</code> exactly as shown, square brackets and quotes included: <code>["stdio"]</code>.</li>
+      </ul>
+      If the setup gives a <code>url</code> instead of a <code>command</code>, the app is online: choose <strong>http (remote)</strong>, paste the address into <strong>Server URL</strong>, and paste its access token, if it gives you one.</li>
+    <li><strong>Save, and grant it to a seat.</strong> In an agent's dossier, add it under <strong>MCPs (on this seat)</strong>. A supervised agent is a good choice the first time, so you approve each call.</li>
+    <li><strong>Open the app.</strong> Many apps answer only while they're running, with the project you want to work on open.</li>
+    <li><strong>Start with a task that only reads.</strong> For example: <em>List what you can do in my-app, then tell me what's in the current project.</em> The terminal's <code>MCP tools available: …</code> line lists the app's tools by name.</li>
+    <li><strong>Allow Sanctorum in the app, if it asks.</strong> Some apps ask before a new AI app connects, and list it under a name such as <em>connected apps</em>. Allow <strong>Sanctorum</strong>, then send the task again. Until you do, the agent is told the app is waiting for you.</li>
+    <li><strong>Then ask for changes.</strong> If the app can show changes as a preview to accept or reject, keep that on while you get to know the agent.</li>
+  </ol>
+  <div class="note"><p>When the result of a task is a change inside another app, write your own <strong>success criteria</strong> in the agent's chat, such as <em>the change is made in the app and the agent confirms it was applied</em>. Otherwise the agent may be graded on how it describes the change, and spend extra steps redrawing its answer.</p></div>
+  <table>
+    <thead><tr><th>If you see</th><th>Try</th></tr></thead>
+    <tbody>
+      <tr><td><code>MCP server '…' skipped: FileNotFoundError</code></td><td>The <strong>Command</strong> path is wrong. Copy it again from the app's setup.</td></tr>
+      <tr><td><code>skipped</code> with another reason</td><td>Make sure the app is open. For an online app, check the address and the token.</td></tr>
+      <tr><td>The app asks you to allow it, or the agent says it is waiting for access</td><td>Allow <strong>Sanctorum</strong> in the app's settings, then send the task again.</td></tr>
+      <tr><td><code>timed out after 120 s</code></td><td>The app took too long, or was waiting for you to click something in its own window.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ 11 -->
+<section class="chapter" id="tasks">
+  <span class="kicker">Chapter 11 · Work</span>
+  <h2>Giving an agent a task</h2>
+  <p class="subtitle">Messages, the terminal and grading</p>
+  <p>Click an agent's <span class="btn lit">message</span> to open your conversation with it in the inbox, type what you want in <strong>Tell them what to do…</strong>, and send it. The agent walks to its desk and starts.</p>
+
+  <div class="side-group">
+  <h3>Success criteria</h3>
+  <figure class="panel side">
+    <img src="images/inbox.webp" alt="">
+    <figcaption>A conversation in the inbox, waiting for an approval.</figcaption>
+  </figure>
+  <p>Every task is graded. Before it starts, the agent turns your task into one testable criterion, shown with 🎯 in the conversation. When it believes it's done, a second check grades the answer against that criterion. If the answer falls short, the agent tries again with the feedback, up to three attempts. Each grade appears with ⚖.</p>
+  <p>To set the criterion yourself, open <strong>🎯 success criteria</strong> under the message box before sending. Blank, it's worked out from the task.</p>
+
+  </div>
+  <h3>The terminal</h3>
+  <figure class="panel">
+    <img src="images/terminal.webp" alt="">
+    <figcaption>Atum's terminal: every step of the task, and the step it's waiting to take.</figcaption>
+  </figure>
+  <p>Click <span class="btn">&gt;_</span> on an agent's card to watch it work. The terminal shows every line of its tasks as they happen:</p>
+  <table>
+    <thead><tr><th>Line</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><em>picked up the task</em></td><td>The run started, with its clearance and the tools it was granted.</td></tr>
+      <tr><td><code>$ write_file …</code></td><td>A step: a tool the agent is using.</td></tr>
+      <tr><td>Grey text</td><td>What the step returned.</td></tr>
+      <tr><td>🎯 and ⚖</td><td>The success criterion, and each grade.</td></tr>
+      <tr><td>⏸</td><td>The agent is waiting for your decision.</td></tr>
+      <tr><td>White text</td><td>The agent's answer.</td></tr>
+    </tbody>
+  </table>
+  <p>While a task is running, type in the terminal's box to <strong>interrupt and redirect</strong>: the current run stops and the agent starts on your new instruction. The stop button ends the run without a new one.</p>
+</section>
+
+<!-- ================================================================ 12 -->
+<section class="chapter" id="approvals">
+  <span class="kicker">Chapter 12 · Work</span>
+  <h2>Approvals and limits</h2>
+  <p>Sanctorum never lets an agent run away from you. How often it asks depends on its supervision setting.</p>
+
+  <h3>Supervised agents</h3>
+  <p>A supervised agent stops before every tool it uses and shows <strong>⏸ approve step</strong> with the step it wants to take, in its terminal, in your conversation with it, and as a waiting light in the title bar.</p>
+  <table>
+    <thead><tr><th>Choice</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td><span class="btn lit">proceed</span></td><td>The step runs, and the agent carries on to the next one.</td></tr>
+      <tr><td><span class="btn">edit</span></td><td>You write a revised instruction instead. The proposed step is cancelled and the agent re-plans from what you wrote.</td></tr>
+      <tr><td><span class="btn">stop</span></td><td>The task ends.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Unattended agents</h3>
+  <p>An agent with supervision off works on its own, but it still stops to ask in two cases:</p>
+  <h4>The step limit</h4>
+  <p>After a number of steps without a check-in, the run pauses with <em>reached 200 steps without a check-in. Proceed to allow 200 more.</em> Proceed and it carries on for another batch; any approval restarts the count. Set the number for everyone in <strong>Settings</strong>, under <strong>Steps per run</strong>, or for one agent in its dossier. A step is one round of tool use, and an agent sometimes uses several tools in a single step.</p>
+  <h4>The cost ceiling</h4>
+  <p>Once a task has spent its cost ceiling, the run pauses with <em>cost ceiling reached ($2.01 of $2.00 for this task). Proceed to keep going.</em> If you proceed, it won't ask about cost again for the rest of that run. Delegating new work past the ceiling stays refused.</p>
+  <div class="note"><p>A pause loses nothing. The run keeps its place while it waits, and continues from the same step when you decide.</p></div>
+</section>
+
+<!-- ================================================================ 13 -->
+<section class="chapter" id="delegation">
+  <span class="kicker">Chapter 13 · Work</span>
+  <h2>Delegation</h2>
+  <p>A team's leader can split a task and hand the pieces to its reports. This is how one request becomes the work of a whole team.</p>
+  <h3>Who may delegate to whom</h3>
+  <ul>
+    <li>Only an agent in a <strong>leader seat</strong> with clearance 6 or more can delegate.</li>
+    <li>It delegates <strong>downward</strong>: to the seats in its own team, and to the leaders of teams that report into its team. Never up, never sideways.</li>
+    <li>Each report works at <strong>its own clearance</strong>. A leader can't lend its powers: a task needing a tool the report lacks is refused, and the leader has to give it to someone who can do it.</li>
+  </ul>
+  <p>Several reports can work at once. After handing out the work, the leader waits for their reports, reviews them, and either accepts them or sends work back with notes.</p>
+  <figure class="panel">
+    <img src="images/leader-terminal.webp" alt="">
+    <figcaption>Alden splits a task between Aeon and Uriel, then waits for their reports.</figcaption>
+  </figure>
+
+  <h3>The delegation tree</h3>
+  <figure class="panel">
+    <img src="images/tree.webp" alt="">
+    <figcaption>One task as a tree: Aeon has finished, and Uriel is waiting for approval.</figcaption>
+  </figure>
+  <p>Every task with delegation forms a tree of runs. Open it from the <span class="btn">tree</span> button on the leader's tile in the <span class="btn">fleet…</span> view. For each run it shows who did it, its state, the tokens it used and how many came from the provider's cache, and what it cost. The header totals the task against its limits.</p>
+  <p>A report waiting for your approval shows its step in the tree, with <span class="btn lit">proceed</span> and <span class="btn">stop</span> beside it. <span class="btn">stop all</span> ends the leader and every report under it.</p>
+
+  <h3>Limits</h3>
+  <table>
+    <thead><tr><th>Limit</th><th>Where</th><th>What it bounds</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Depth</strong></td><td>Settings</td><td>How many levels down work can be passed, from 1 (no delegation) to 10.</td></tr>
+      <tr><td><strong>Runs per task</strong></td><td>Settings</td><td>How many runs one task may start in total. 0 means no limit.</td></tr>
+      <tr><td><strong>Cost ceiling</strong></td><td>Settings</td><td>What one task may spend, in US dollars. 0 means no limit.</td></tr>
+      <tr><td><strong>Budget</strong></td><td>A leader's dossier</td><td>What that leader and its reports may spend on one task.</td></tr>
+    </tbody>
+  </table>
+  <p>A task keeps the limits it started with, so changing them in Settings affects the next task, not the one running.</p>
+</section>
+
+<!-- ================================================================ 14 -->
+<section class="chapter" id="memory">
+  <span class="kicker">Chapter 14 · Work</span>
+  <h2>Memory</h2>
+  <p>Agents keep notes between tasks: decisions made, conventions agreed, what went wrong last time. They read their memory before starting work, and agents with clearance 3 or more write new entries when they learn something worth keeping.</p>
+  <h3>Three scopes</h3>
+  <table>
+    <thead><tr><th>Scope</th><th>Who sees it</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Agent</strong></td><td>Only that agent. Its private notes.</td></tr>
+      <tr><td><strong>Position</strong></td><td>Whoever holds the seat. It stays with the seat when the agent changes.</td></tr>
+      <tr><td><strong>Team</strong></td><td>Everyone on the team. Shown and edited in <a href="#teams">Teams</a>.</td></tr>
+    </tbody>
+  </table>
+  <h3>Kinds and protection</h3>
+  <p>Each entry is a <em>task</em>, a <em>result</em>, an <em>insight</em> or a <em>note</em>. It also carries a minimum clearance, so a junior seat on the team can't read what's meant for senior ones, and a data type, so an agent only reads entries at or below its own data type.</p>
+  <div class="note info"><p>If an entry you added disappears from a team's memory view, its minimum clearance is probably above what the view's seat holds. The entry is still there; the protection is working.</p></div>
+</section>
+
+<!-- ================================================================ 15 -->
+<section class="chapter" id="web">
+  <span class="kicker">Chapter 15 · Work</span>
+  <h2>The web, images and speech</h2>
+  <h3>Searching and reading the web</h3>
+  <p>Agents search the web with Serper, so web search needs a Serper key in Settings. To read a page they have two ways, chosen under <strong>Web access</strong> in Settings, or per agent in its dossier:</p>
+  <table>
+    <thead><tr><th>Web access</th><th>How pages are read</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Text only</strong></td><td>The page is fetched and read as text, with no browser. Cheap and fast, but sites that build themselves with JavaScript may come back empty. From clearance 1.</td></tr>
+      <tr><td><strong>Browser</strong></td><td>The agent opens pages in a real browser that you can watch in the app, clicking, typing and scrolling like a person. Works on any site, at roughly ten times the cost. From clearance 5.</td></tr>
+      <tr><td><strong>Both</strong></td><td>The model picks for each page.</td></tr>
+    </tbody>
+  </table>
+  <p>Each agent has its own browser, which stays signed in to the sites it uses between tasks. Click <span class="btn">sign out</span> in its browser pane to clear them all. For your safety, agents can't open addresses on your own computer or your local network.</p>
+  <div class="note warn"><p>An agent signed in to a site can act as you there. Pages, files and search results can also contain instructions aimed at the agent. Its clearance and your approvals still hold, but keep agents that browse unfamiliar sites supervised, or at a low clearance.</p></div>
+
+  <h3>Images and speech</h3>
+  <p>From clearance 3, agents can create images and audio, saved into their workspace. Choose the models in Settings, under <strong>Image model</strong> and <strong>Speech model</strong>, or per agent. Both are billed by OpenRouter like any other call.</p>
+</section>
+
+<!-- ================================================================ 16 -->
+<section class="chapter" id="fleet">
+  <span class="kicker">Chapter 16 · Work</span>
+  <h2>The fleet and announcements</h2>
+  <h3>The fleet</h3>
+  <figure>
+    <img src="images/fleet.webp" alt="">
+    <figcaption>The fleet: Alden and Atum working, and everyone else idle.</figcaption>
+  </figure>
+  <p>Open <span class="btn">fleet…</span> to see every agent as a tile: its title, what it's doing, and the last line of its latest task. A tile waiting for you shows the step with <span class="btn lit">proceed</span>, <span class="btn">edit</span> and <span class="btn">stop</span>, and a working tile has a box to redirect it. <span class="btn">open terminal</span> opens its terminal, and <span class="btn">tree</span> opens the delegation tree of its current task.</p>
+  <h3>Announcements</h3>
+  <p>Sanctorum can tell you when an agent replies or finishes, so you don't have to watch. Choose under <strong>Announce</strong> in Settings:</p>
+  <ul>
+    <li><strong>Off</strong>: silent.</li>
+    <li><strong>Chime</strong>: a short sound.</li>
+    <li><strong>Voice</strong>: your computer reads out who finished, in the voice you pick.</li>
+  </ul>
+  <p>Announcements use your computer's own voices: free, instant and offline. <span class="btn">Test</span> plays a sample. The choice is kept on this computer only.</p>
+</section>
+
+<!-- ================================================================ 17 -->
+<section class="chapter" id="settings">
+  <span class="kicker">Chapter 17 · Settings and reference</span>
+  <h2>Settings</h2>
+  <figure class="panel">
+    <img src="images/settings.webp" alt="">
+    <figcaption>Settings: the options on the left and the model picker on the right.</figcaption>
+  </figure>
+  <h3>Options</h3>
+  <table>
+    <thead><tr><th>Setting</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Web access</strong></td><td>Text only, Browser or Both, for every agent that doesn't choose its own.</td></tr>
+      <tr><td><strong>Announce</strong></td><td>Off, Chime or Voice, and the voice to use.</td></tr>
+      <tr><td><strong>Provider API keys</strong></td><td>Your OpenRouter key, for the AI models, and your Serper key, for web search. They're encrypted by your operating system's keychain, and only shown as set.</td></tr>
+      <tr><td><strong>Depth</strong>, <strong>Runs per task</strong>, <strong>Cost ceiling</strong></td><td>The delegation limits. See <a href="#delegation">Delegation</a>.</td></tr>
+      <tr><td><strong>Steps per run</strong></td><td>How many steps an agent may take without checking in. 200 to start; 0 means no limit.</td></tr>
+      <tr><td><strong>Skip repeat reads</strong></td><td>When an agent re-reads a file that hasn't changed, it gets a short note instead of the whole text again, which saves tokens. Asking a second time returns the full file.</td></tr>
+    </tbody>
+  </table>
+  <h3>Choosing models</h3>
+  <p>The right side picks three models: the <strong>Default model</strong> every agent thinks with, the <strong>Image model</strong> and the <strong>Speech model</strong>. Search by name, and filter by company, price and capability. Each model shows its price per million tokens in and out, how much it can read at once, and badges such as <code>tools</code> and <code>vision</code>.</p>
+  <div class="note"><p>Your agents need a model with the <code>tools</code> badge, because using tools is how they work. A model without it fails with a message saying so.</p></div>
+  <p>Each agent can use its own model instead, from <span class="btn">choose…</span> in its dossier: a cheap model for a reader, a strong one for a lead.</p>
+</section>
+
+<!-- ================================================================ 18 -->
+<section class="chapter" id="clearance">
+  <span class="kicker">Chapter 18 · Settings and reference</span>
+  <h2>Clearance reference</h2>
+  <p>Clearance is a ladder. A seat gets every tool at or below its level. The names are the usual job-architecture titles.</p>
+  <table class="ref">
+    <thead><tr><th>Level</th><th>Name</th><th>Adds</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>Guest / External</td><td>Reading files and folders in its workspace, web search, reading memory</td></tr>
+      <tr><td>1</td><td>Employee / User</td><td>Reading a web page as text</td></tr>
+      <tr><td>2</td><td>Power User</td><td>Nothing new</td></tr>
+      <tr><td>3</td><td>Supervisor / Team Lead</td><td>Writing and editing files, writing memory, creating images and speech</td></tr>
+      <tr><td>4</td><td>Department Manager</td><td>Nothing new</td></tr>
+      <tr><td>5</td><td>Department Administrator</td><td>Running commands, and the browser: opening pages, clicking, typing, scrolling, going back and reading the page</td></tr>
+      <tr><td>6</td><td>System Administrator</td><td>Delegating, from a leader seat</td></tr>
+      <tr><td>7</td><td>Security Administrator</td><td>Nothing new yet: reserved for future tools</td></tr>
+      <tr><td>8</td><td>Super Administrator</td><td>Nothing new yet</td></tr>
+    </tbody>
+  </table>
+  <p>An agent without a seat has clearance 0. The browser also needs Web access to include it, and an agent whose real folder is read-only only gets the reading tools.</p>
+  <h3>Data types</h3>
+  <p>Data type is a separate ladder for what an agent may <em>know</em>: an agent reads memory entries at or below its own data type, whatever its clearance.</p>
+  <table class="ref">
+    <thead><tr><th>Level</th><th>Name</th><th>Level</th><th>Name</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Public</td><td>8</td><td>Corporate Secret</td></tr>
+      <tr><td>2</td><td>Internal</td><td>9</td><td>Strategic Secret</td></tr>
+      <tr><td>3</td><td>Confidential</td><td>10</td><td>Black Access</td></tr>
+      <tr><td>4</td><td>Restricted</td><td>11</td><td>Cosmic Access</td></tr>
+      <tr><td>5</td><td>Highly Restricted</td><td>12</td><td>Omega Access</td></tr>
+      <tr><td>6</td><td>Executive Only</td><td>13</td><td>Genesis Access</td></tr>
+      <tr><td>7</td><td>Board Only</td><td>14</td><td>Palantir Access</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ 19 -->
+<section class="chapter" id="costs">
+  <span class="kicker">Chapter 19 · Settings and reference</span>
+  <h2>What it costs</h2>
+  <p>Sanctorum itself is free. The AI models are paid for through your OpenRouter account, by the token: a token is a piece of a word, and each call is charged for what it reads in and what it writes out. Prices differ a lot between models, and the model picker shows them.</p>
+  <h3>Where to see it</h3>
+  <ul>
+    <li>The <strong>title bar</strong> shows what the current task has spent so far.</li>
+    <li>The <strong>delegation tree</strong> shows each run's tokens in and out, how many were read from the provider's cache, and its cost.</li>
+  </ul>
+  <h3>Why long tasks cost more</h3>
+  <p>An agent's whole conversation is sent to the model again at every step, so a long task reads more with each step it takes. Providers cache the repeated part, and bill it at a fraction of the price: Sanctorum asks for this on Claude models, where it's about a tenth, and most other providers do it on their own.</p>
+  <h3>Spending less</h3>
+  <ul>
+    <li>Give simple seats a <strong>cheaper model</strong> in their dossiers.</li>
+    <li>Keep <strong>Web access</strong> on <em>Text only</em> where the browser isn't needed: a browsed page costs roughly ten times more.</li>
+    <li>Leave <strong>Skip repeat reads</strong> on.</li>
+    <li>Set a <strong>Cost ceiling</strong>, and a <strong>Budget</strong> on leaders that delegate a lot.</li>
+    <li>Give big jobs as several smaller tasks, so each conversation stays short.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ 20 -->
+<section class="chapter" id="privacy">
+  <span class="kicker">Chapter 20 · Settings and reference</span>
+  <h2>Your data and privacy</h2>
+  <h3>What stays on your computer</h3>
+  <p>Your organisation, conversations, run history, memory and settings are kept in Sanctorum's folder: <code>%APPDATA%\Sanctorum</code> on Windows, <code>~/Library/Application Support/Sanctorum</code> on macOS. Agents' workspaces, uploaded portraits and each agent's browser profile live there too. Before an update changes the database, Sanctorum saves a copy of it beside the original.</p>
+  <p>Uninstalling Sanctorum leaves this folder in place, so reinstalling finds your organisation intact. Delete it yourself to start over, and back it up to keep your work safe.</p>
+  <h3>What leaves it</h3>
+  <ul>
+    <li><strong>Each run</strong> sends OpenRouter what the model needs: the agent's instructions, your task and the conversation so far, including the contents of files it read and pages it visited. OpenRouter passes it to the maker of the model you chose.</li>
+    <li><strong>Searches</strong> go to Serper; <strong>pages</strong> are requested from the sites themselves; the <strong>browser</strong> visits sites like any browser.</li>
+    <li><strong>MCP servers</strong> you add receive the calls agents make to them.</li>
+  </ul>
+  <p>Sanctorum sends no usage analytics, telemetry or crash reports, has no account, and doesn't check for updates on its own. The full privacy policy is published with Sanctorum's source code.</p>
+</section>
+
+<!-- ================================================================ 21 -->
+<section class="chapter" id="troubleshooting">
+  <span class="kicker">Chapter 21 · Settings and reference</span>
+  <h2>Tips and troubleshooting</h2>
+  <h4>"The model does not support tool use"</h4>
+  <p>The chosen model can't use tools, and every seated agent needs them. Pick one with the <code>tools</code> badge, in Settings or in the agent's dossier.</p>
+  <h4>"The OpenRouter account has no credit left"</h4>
+  <p>Add credit to your OpenRouter account, then send the task again.</p>
+  <h4>"No provider is currently serving this model"</h4>
+  <p>The model is temporarily unavailable on OpenRouter. Choose another one.</p>
+  <h4>An agent refuses to use a tool</h4>
+  <p>The tool is above its seat's clearance. Check the clearance in its dossier, and remember that an agent without a seat has none. See <a href="#clearance">Clearance reference</a>.</p>
+  <h4>An agent won't open the browser</h4>
+  <p>The browser needs clearance 5 and Web access set to <em>Browser</em> or <em>Both</em>.</p>
+  <h4>Nothing seems to happen</h4>
+  <p>Look for the waiting light in the title bar: an agent may be waiting for your approval, at a step, its step limit or its cost ceiling. Answer it in its terminal, in the inbox, or in the delegation tree for a report.</p>
+  <h4>Windows says it protected your PC, or macOS won't open the app</h4>
+  <p>Sanctorum isn't code-signed yet. See <a href="#installing">Installing and opening Sanctorum</a>.</p>
+  <h4>On macOS, the app opens from Applications but not from the Dock</h4>
+  <p>The Dock icon may still point at an old copy. Remove it from the Dock, open Sanctorum from Applications, and keep that icon in the Dock instead.</p>
+  <hr>
+  <p style="text-align: center">Sanctorum is open source under the GNU Affero General Public License v3.0.<br>Questions and reports: support.darkmatterlabs@gmail.com</p>
+</section>
+
+</body>
+</html>

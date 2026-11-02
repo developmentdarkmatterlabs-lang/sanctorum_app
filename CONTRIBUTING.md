@@ -44,8 +44,10 @@ merge every change.
   - preparing the user's database at launch (`database.ts`);
   - encrypting API keys with the OS keychain (`secrets.ts`, `secretsBridge.ts`);
   - the agent browser (`browser.ts`).
-- `scripts/buildSeedDb.js` — builds `backend/database/seed.db`, the database a
-  new install starts from.
+- `scripts/` — `buildSeedDb.js` builds `backend/database/seed.db`, the database
+  a new install starts from; `build_manual.ps1` and `manualShots.mjs` build the
+  user manual.
+- `docs/` — the README's pictures, and the user manual in `docs/manual/`.
 - `.github/workflows/` — the release builds.
 - `.claude/skills/` — step-by-step guides to each phase of the build, and to
   shipping Windows and macOS builds.
@@ -58,6 +60,7 @@ Prerequisites:
 - Python 3.11+ (CI uses 3.12) and [uv](https://docs.astral.sh/uv/)
 - An [OpenRouter](https://openrouter.ai/keys) key, for runs that call a model
 - Optional: a [Serper](https://serper.dev) key, for the web search tool
+- To rebuild the user manual: [ffmpeg](https://ffmpeg.org) and Edge or Chrome
 
 ```bash
 npm run install:all      # root, backend and frontend packages, then `uv sync` for the AI service
@@ -137,6 +140,23 @@ the pull request which ones you did.
 
 Finally, check the change by hand in the running app, in the desktop app as
 well as the browser when it touches Electron, packaging or file paths.
+
+## The user manual
+
+The PDF manual, `docs/manual/Sanctorum_Manual.pdf`, is printed from
+`docs/manual/manual.html`. A change users can see or use updates its page there,
+and its pictures if it changes how the app looks:
+
+```powershell
+scripts\build_manual.ps1                          # print the PDF
+scripts\build_manual.ps1 -Screenshots             # rebuild the app, retake every picture, print
+scripts\build_manual.ps1 -Screenshots -Only teams # retake some pictures
+```
+
+The pictures come from the real app, run against a demo database the script
+stages, so they never show your own organisation. Close Sanctorum before taking
+them. A new picture is a new entry in the `SHOTS` list in
+`scripts/manualShots.mjs`.
 
 ## Building installers
 

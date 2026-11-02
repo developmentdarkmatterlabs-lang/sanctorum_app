@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # one still pauses.
     auto_approve_tools: str = ""
 
+    # Seconds one external MCP tool call may take before it is abandoned and reported to the agent.
+    mcp_call_timeout: float = 120.0
+
     # Phase 4 — delegation tracing. "1" prints a timestamped, run-id-tagged line
     # at each step/park/resume decision. Off by default (verbose).
     sanctorum_trace: str = ""
