@@ -23,7 +23,11 @@ the organisation, and is enforced in code rather than requested in a prompt.
   folder mounted for an agent is read-only unless you turn that off.
 - **Commands get a minimal environment.** `run_command` receives only an
   allowlisted environment (`PATH` and the few variables Windows needs), never
-  the host's secrets.
+  the host's secrets. A local (stdio) MCP server gets the same list plus the
+  MCP library's standard set: on Windows `APPDATA`, `LOCALAPPDATA`,
+  `USERPROFILE`, `USERNAME` and a few more; on macOS `HOME`, `USER`, `SHELL`
+  and similar. That still holds no keys or tokens, but it does tell the server
+  where your user folders are.
 - **Approvals and limits.** A supervised agent pauses before every tool call,
   except read-only tools listed in `AUTO_APPROVE_TOOLS`. An unattended run
   pauses for a check-in at its step limit and at its cost ceiling.

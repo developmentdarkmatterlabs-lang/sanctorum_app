@@ -24,6 +24,7 @@ from typing import Any
 
 import httpx
 from langchain_core.messages import HumanMessage, ToolMessage
+from openai import OpenAIError
 
 from ..config.settings import settings
 from ..runtime.emitter import EventEmitter
@@ -353,7 +354,21 @@ def _all_auto_approved(pending: list[dict], spec: RunSpec | None = None) -> bool
     return all(tc.get("name") in allow for tc in pending)
 
 
-def _explain(exc: Exception, spec: RunSpec) -> str:
+def _failed_step(run: _Run) -> tuple[str | None, list[str]]:
+    """The graph node whose task failed, and for the tool step the tools it was calling."""
+    try:
+        snap = run.graph.get_state(run.config)
+    except Exception:  # noqa: BLE001 — the explanation is best-effort
+        return None, []
+    node = next((t.name for t in snap.tasks if t.error), None)
+    if node != "tools":
+        return node, []
+    messages = snap.values.get("messages") or []
+    calls = getattr(messages[-1], "tool_calls", None) if messages else None
+    return node, [tc.get("name", "?") for tc in calls or []]
+
+
+def _explain(exc: Exception, spec: RunSpec, node: str | None = None, tools: list[str] | None = None) -> str:
     """Turn a provider error into something the user can act on.
 
     A model that cannot call tools fails with a raw LiteLLM/OpenRouter 404 —
@@ -362,14 +377,22 @@ def _explain(exc: Exception, spec: RunSpec) -> str:
     the position), so picking a search-only model for a seated agent is an easy
     mistake with an unreadable symptom.
 
+    Only errors raised by the model call (LiteLLM's, all `OpenAIError`s) get the
+    model hints; a tool's own error is labelled as one, so it never blames the model.
     Anything we do not recognise is passed through verbatim: a vague guess would
     be worse than the real error.
     """
     text = str(exc)
     low = text.lower()
 
+    if not isinstance(exc, OpenAIError):
+        if node == "tools":
+            names = ", ".join(tools or []) or "a tool"
+            return f"the tool step ({names}) failed: {type(exc).__name__}: {text}"
+        return text
+
     if "no endpoints found that support tool use" in low or (
-        "tool" in low and "not support" in low
+        "does not support parameters" in low and "tools" in low
     ):
         return (
             f"the model '{spec.model}' does not support tool use, and this agent's "
@@ -418,7 +441,8 @@ async def _advance(run: _Run, graph_input: Any) -> None:
         except Exception as exc:  # noqa: BLE001
             # A failed step still spent tokens; report them before the error.
             await _report_usage(run)
-            await run.emitter.emit("error", body=f"run failed: {_explain(exc, run.spec)}")
+            node, tools = _failed_step(run)
+            await run.emitter.emit("error", body=f"run failed: {_explain(exc, run.spec, node, tools)}")
             _finish(run.spec.runId)
             return
 

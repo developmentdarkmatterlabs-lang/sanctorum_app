@@ -21,7 +21,8 @@ Seat AI agents in an org chart, and every tool, folder and budget they get follo
   <a href="#a-tour"><b>Tour</b></a> ·
   <a href="#the-capability-model"><b>Capability model</b></a> ·
   <a href="#features"><b>Features</b></a> ·
-  <a href="#sanctorum-vs-the-field"><b>Compare</b></a>
+  <a href="#sanctorum-vs-the-field"><b>Compare</b></a> ·
+  <a href="docs/manual/Sanctorum_Manual.pdf"><b>User manual</b></a>
 </p>
 # Sanctorum - Pixel Agents
 
@@ -377,7 +378,7 @@ Layered, and each one enforced somewhere the model cannot reach.
 |---|---|---|
 | **Tool gating** | `ToolExecutor._allowed` (Python) | An ungranted tool has **no code path** to execution — the model isn't even offered its schema |
 | **Path confinement** | `tools/files.py` `_resolve` | `../` escapes are refused even at clearance 8 |
-| **Environment allowlist** | `toolPolicy` env | No host secrets reach a run; only `PATH` + OS bootstrap vars, so the shell works without leaking |
+| **Environment allowlist** | `toolPolicy` env | No host secrets reach a run; only `PATH` + OS bootstrap vars, so the shell works without leaking. A stdio MCP server also gets the MCP library's standard set (on Windows `APPDATA`, `LOCALAPPDATA`, `USERPROFILE`, `USERNAME`, …), still no keys or tokens |
 | **Read-only mounts** | `toolPolicy` | A real-folder mount strips mutating tools regardless of clearance |
 | **Approval pause** | `interrupt_before` | Nothing consequential runs unwatched unless you turn supervision off for that agent |
 | **Target validation** | `delegateTargets` | Illegal delegation edges are never *returned*, not returned-then-rejected |

@@ -1,0 +1,436 @@
+/* Sanctorum user manual: the app's look (navy panels, amber accent, cyan portals) for docs/manual/manual.html.
+   Styling only: the text lives in manual.html. Colours are the app's dark theme (frontend/styles/themes/presets/dark.css).
+   Printed by scripts/build_manual.ps1. */
+
+:root {
+  /* the app's dark theme */
+  --surface-primary: #191d24;
+  --surface-secondary: #12151a;
+  --surface-tertiary: #0d1014;
+  --content-primary: #d7dde6;
+  --content-secondary: #7b8494;
+  --content-tertiary: #4a5262;
+  --border-primary: #262c36;
+  --border-secondary: #1b2027;
+  --accent-primary: #f0a832;
+  --accent-secondary: #8a6420;
+  --accent-muted: #54431f;
+  --error: #e05555;
+  --error-muted: #5a2a2a;
+  --info: #57c7ff;
+  --info-muted: #274454;
+  --success: #5fd068;
+
+  /* the page: the entrance's floor, a step darker than the panels */
+  --page: #0b0d10;
+  --steel: #3a4352;
+  --ink: #c3cad5;
+  /* soft glows are kept to the cover: a blurred shadow prints as a picture */
+
+  --mono: Consolas, 'SF Mono', Menlo, 'Liberation Mono', monospace;
+  --sans: 'Segoe UI', -apple-system, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* the sheet: dark to its edges, inside the bulkhead (ornaments/page-frame.svg) placed from the page area's corner */
+@page {
+  size: A4;
+  margin: 24mm 22mm 26mm;
+  background: var(--page) url('ornaments/page-frame.svg') -22mm -24mm / 210mm 297mm no-repeat;
+  @bottom-center {
+    content: counter(page, decimal-leading-zero);
+    font: 700 9.5pt var(--mono);
+    letter-spacing: .18em;
+    color: var(--accent-primary);
+    vertical-align: middle;
+    padding-bottom: 3mm;
+  }
+}
+@page :first { @bottom-center { content: none; } }
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 166mm;
+  color: var(--ink);
+  font: 10.2pt/1.58 var(--sans);
+  hyphens: auto;
+}
+
+p, li { orphans: 3; widows: 3; }
+p { margin: 0 0 2.4mm; text-align: justify; }
+li { margin: 0 0 1.2mm; }
+
+a { color: var(--accent-primary); text-decoration: none; }
+strong, b { color: var(--content-primary); font-weight: 600; }
+i, em { color: var(--content-primary); }
+
+/* ---- headings: the app's mono, letter-spaced like its title ---- */
+h1, h2, h3, h4 { font-family: var(--mono); line-height: 1.15; break-after: avoid; }
+
+/* a chapter's title */
+.chapter > h2 {
+  text-align: center;
+  font-size: 23pt;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--content-primary);
+  margin: 0 0 1mm;
+}
+.chapter > h2::after {
+  content: '';
+  display: block;
+  width: 96mm;
+  height: 6mm;
+  margin: 3.5mm auto 6mm;
+  background: url('ornaments/divider.svg') center / contain no-repeat;
+}
+.chapter > .subtitle {
+  text-align: center;
+  font: italic 11pt var(--sans);
+  color: var(--content-secondary);
+  margin: -4.5mm 0 6mm;
+}
+
+/* a section in a chapter: amber, like the app's lit chips */
+h3 {
+  font-size: 12pt;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  margin: 8mm 0 3mm;
+  padding-bottom: 2.2mm;
+  background: linear-gradient(90deg, var(--accent-primary), rgba(240, 168, 50, 0)) left bottom / 56mm .45mm no-repeat;
+}
+
+/* a smaller heading, led by a lit status light */
+h4 {
+  font-size: 9.5pt;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--content-primary);
+  margin: 5mm 0 1.8mm;
+}
+h4::before {
+  content: '';
+  display: inline-block;
+  width: 2mm;
+  height: 2mm;
+  margin: 0 2.2mm .35mm 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ffe2a8, var(--accent-primary) 55%, #6b4a10);
+}
+
+/* ---- the cover: the entrance, the title and the cast ---- */
+.cover {
+  height: 236mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  break-after: page;
+}
+.cover .art {
+  position: relative;
+  width: 100%;
+  border: .5mm solid var(--border-primary);
+  border-radius: 1.6mm;
+  overflow: hidden;
+  box-shadow: 0 0 9mm rgba(87, 199, 255, .16);
+}
+.cover .art img { display: block; width: 100%; height: 92mm; object-fit: cover; object-position: center 38%; }
+.cover .art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 55%, rgba(11, 13, 16, .85));
+}
+.cover h1 {
+  font-size: 44pt;
+  font-weight: 700;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  margin: 9mm 0 0 .3em;
+  color: var(--accent-primary);
+  text-shadow: 0 0 12px rgba(240, 168, 50, .45);
+}
+.cover h1::after {
+  content: '';
+  display: block;
+  width: 110mm;
+  height: 6mm;
+  margin: 5mm auto 0;
+  background: url('ornaments/divider.svg') center / contain no-repeat;
+}
+.cover .tagline { font: italic 12.5pt var(--sans); color: var(--content-secondary); margin: 4mm 0 9mm; text-align: center; }
+
+/* the cast, as their cards in the agents panel; the lit one leads */
+.cover .cast { display: flex; gap: 3.5mm; justify-content: center; margin: 0 0 10mm; }
+.cover .cast span {
+  width: 17mm;
+  height: 19mm;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(var(--surface-primary), var(--surface-tertiary));
+  border: .3mm solid var(--border-primary);
+  border-radius: 1.4mm;
+}
+.cover .cast img { width: 100%; height: 100%; object-fit: cover; object-position: center top; opacity: .55; filter: grayscale(.5); }
+.cover .cast span.on { border-color: var(--accent-primary); box-shadow: 0 0 2.5mm rgba(240, 168, 50, .5); }
+.cover .cast span.on img { opacity: 1; filter: none; }
+
+.cover .edition {
+  font: 700 9.5pt var(--mono);
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+.cover .maker {
+  margin-top: 5mm;
+  font: 700 8.5pt var(--mono);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--content-secondary);
+}
+
+/* a chip: chapter labels, the cover's edition line (the app's "Enter the office" button) */
+.kicker, .cover .edition {
+  background: rgba(0, 0, 0, .4);
+  border: .3mm solid rgba(240, 168, 50, .7);
+  border-radius: 1mm;
+  padding: 1.4mm 4.5mm;
+}
+
+/* ---- contents ---- */
+.contents { break-after: page; }
+.contents h2 {
+  text-align: center;
+  font-size: 23pt;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--content-primary);
+  margin: 0;
+}
+.contents h2::after {
+  content: '';
+  display: block;
+  width: 80mm;
+  height: 5mm;
+  margin: 3mm auto 0;
+  background: url('ornaments/divider.svg') center / contain no-repeat;
+}
+.contents ol { list-style: none; padding: 0; margin: 3mm 0 0; }
+.contents li { margin: 0; padding: .95mm 0 .95mm 7mm; border-bottom: .3mm dotted var(--border-primary); position: relative; }
+.contents li::before {
+  content: '';
+  position: absolute;
+  left: .6mm;
+  top: 2.7mm;
+  width: 1.7mm;
+  height: 1.7mm;
+  border-radius: 50%;
+  background: var(--accent-primary);
+}
+.contents li a { color: var(--content-primary); font-size: 10.5pt; }
+.contents li .n { display: inline-block; width: 8mm; font: 700 9.5pt var(--mono); color: var(--accent-primary); }
+.contents li .sub { color: var(--content-secondary); font-size: 9pt; }
+.contents .toc-part {
+  border: 0;
+  padding: 4mm 0 .6mm;
+  text-align: center;
+  font: 700 9pt var(--mono);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--info);
+}
+.contents .toc-part::before { content: none; }
+
+/* ---- chapter openers ---- */
+.chapter { break-before: page; }
+.kicker {
+  display: block;
+  width: fit-content;
+  margin: 6mm auto 4mm;
+  font: 700 8.5pt var(--mono);
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+
+/* the chapter's first letter, as a lit agent card (never the subtitle's) */
+.chapter > h2 + p:not(.subtitle), .chapter > .subtitle + p { display: flow-root; }
+.chapter > h2 + p:not(.subtitle)::first-letter, .chapter > .subtitle + p::first-letter {
+  float: left;
+  font: 700 25pt/1 var(--mono);
+  color: var(--accent-primary);
+  background: linear-gradient(var(--surface-primary), var(--surface-tertiary));
+  border: .35mm solid var(--accent-primary);
+  border-radius: 1.2mm;
+  padding: 1.8mm 2.8mm 1.4mm;
+  margin: .8mm 3mm 0 0;
+}
+
+/* ---- the rest of the page ---- */
+hr {
+  border: 0;
+  height: 6mm;
+  margin: 6mm auto;
+  width: 70mm;
+  background: url('ornaments/divider.svg') center / contain no-repeat;
+}
+
+code {
+  font: 8.8pt var(--mono);
+  color: var(--accent-primary);
+  background: var(--surface-secondary);
+  border: .25mm solid var(--border-primary);
+  border-radius: .8mm;
+  padding: 0 1mm;
+  overflow-wrap: anywhere;
+}
+pre {
+  font: 8.8pt/1.5 var(--mono);
+  color: var(--content-primary);
+  background: var(--surface-tertiary);
+  border: .3mm solid var(--border-primary);
+  border-left: .8mm solid var(--accent-primary);
+  padding: 3mm 4mm;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  break-inside: avoid;
+}
+pre code { background: none; border: 0; padding: 0; color: inherit; }
+
+/* a button or key to press: the app's chip */
+.key, .btn {
+  font: 8.5pt var(--mono);
+  color: var(--content-primary);
+  background: var(--surface-tertiary);
+  border: .25mm solid var(--border-primary);
+  border-radius: .9mm;
+  padding: 0 1.3mm;
+  white-space: nowrap;
+}
+.btn.lit { color: var(--accent-primary); border-color: var(--accent-primary); }
+
+/* a tip, a warning or a note about the portal-blue parts of the app */
+.note, blockquote {
+  position: relative;
+  margin: 5mm 0;
+  padding: 3.2mm 5mm 3.2mm 11mm;
+  background: linear-gradient(var(--surface-primary), var(--surface-secondary));
+  border: .3mm solid var(--border-primary);
+  border-left: .8mm solid var(--accent-primary);
+  border-radius: 1.2mm;
+  color: var(--content-primary);
+  break-inside: avoid;
+}
+.note::before, blockquote::before {
+  content: '';
+  position: absolute;
+  left: 4.2mm;
+  top: 4.5mm;
+  width: 2.5mm;
+  height: 2.5mm;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ffe2a8, var(--accent-primary) 55%, #6b4a10);
+}
+.note.warn { border-left-color: var(--error); background: linear-gradient(#211a1d, var(--surface-secondary)); }
+.note.warn::before { background: radial-gradient(circle at 40% 35%, #ffc2c2, var(--error) 55%, #5a1c1c); }
+.note.info { border-left-color: var(--info); }
+.note.info::before { background: radial-gradient(circle at 40% 35%, #d8f4ff, var(--info) 55%, #1d5a78); }
+.note p, blockquote p { margin: 0; text-align: left; }
+.note p + p { margin-top: 1.6mm; }
+
+/* tables: a panel with a lit header */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4mm 0 6mm;
+  font-size: 9.2pt;
+  border-top: .5mm solid var(--steel);
+  border-bottom: .5mm solid var(--steel);
+}
+th, td { text-align: left; vertical-align: top; padding: 1.6mm 2.4mm; border-bottom: .25mm solid var(--border-primary); }
+td { background: var(--surface-secondary); }
+th {
+  font: 700 8pt var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  background: var(--surface-primary);
+}
+thead th { border-bottom: .35mm solid var(--accent-primary); }
+tbody tr:nth-child(even) td { background: #15191f; }
+tr { break-inside: avoid; }
+table.ref { break-inside: avoid; }
+td:first-child { color: var(--content-primary); }
+table.ref td:first-child { width: 16mm; text-align: center; font: 700 9.5pt var(--mono); color: var(--accent-primary); }
+
+ul, ol { padding-left: 6mm; margin: 0 0 3mm; }
+ul li::marker { color: var(--accent-primary); content: '▪  '; font-size: 8pt; }
+ol li::marker { color: var(--accent-primary); font-family: var(--mono); font-weight: 700; }
+
+/* pictures, framed like an app window */
+figure { margin: 5mm 0 7mm; break-inside: avoid; text-align: center; }
+figure img {
+  display: block;
+  width: 100%;
+  padding: 1.2mm;
+  background: var(--surface-tertiary);
+  border: .45mm solid var(--steel);
+  border-radius: 1.2mm;
+}
+/* a dialog or panel, cropped from the window: as large as fits, under half a page */
+figure.panel img { width: auto; max-width: 100%; max-height: 96mm; margin: 0 auto; }
+.side-group { display: flow-root; break-inside: avoid; }
+.chapter { display: flow-root; }
+figure.side { float: right; width: 44%; margin: 1mm 0 4mm 6mm; }
+figure.side img { width: 100%; max-height: none; }
+figure.side figcaption { text-align: left; }
+h3 { clear: both; }
+.pair { display: flex; gap: 6mm; justify-content: center; align-items: flex-start; break-inside: avoid; margin: 5mm 0 7mm; }
+.pair figure { margin: 0; flex: 0 1 auto; }
+.pair figure img { width: auto; max-width: 100%; max-height: 140mm; margin: 0 auto; }
+figcaption {
+  margin-top: 3.2mm;
+  font-size: 9pt;
+  font-style: italic;
+  color: var(--content-secondary);
+}
+figcaption::before {
+  content: '';
+  display: inline-block;
+  width: 1.6mm;
+  height: 1.6mm;
+  margin: 0 2mm .25mm 0;
+  border-radius: 50%;
+  background: var(--info);
+}
+
+/* the building: eleven floors in a grid */
+.floors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3.5mm 3.5mm; margin: 4mm 0 6mm; break-inside: avoid; }
+.floors figure { margin: 0; }
+.floors figcaption { margin-top: 1.6mm; font: 700 8pt var(--mono); font-style: normal; letter-spacing: .12em; text-transform: uppercase; color: var(--content-primary); }
+.floors figcaption::before { content: none; }
+.floors figcaption b { color: var(--accent-primary); }
+
+/* reading on screen, not printing */
+@media screen {
+  html { background: var(--page); }
+  body { padding: 14mm 6mm 30mm; }
+  .cover { height: auto; padding: 10mm 0 20mm; }
+  .chapter { margin-top: 18mm; padding-top: 12mm; background: url('ornaments/divider.svg') top center / 90mm 6mm no-repeat; }
+}

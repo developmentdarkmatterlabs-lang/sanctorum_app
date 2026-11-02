@@ -13,3 +13,19 @@
 - New dependencies must be compatible with AGPL-3.0.
 - Ask before running anything that calls a model: it spends the user's OpenRouter credit.
 - Comments: few, and one short line each (about 30 words at most). Update existing ones rather than adding new ones.
+
+## Where things go
+
+| Content | Location |
+|---|---|
+| To-do plans, notes and reminders for later | [notes/](notes/) |
+| Images used in [README.md](README.md) | `docs/assets/readme/` |
+| The user manual (PDF), its source and its pictures | `docs/manual/` |
+
+## Keep the PDF manual current
+
+Everything you create or change that a user can see or use must also be updated in the user manual in `docs/manual/`:
+
+- Write it in `docs/manual/manual.html` and rebuild the PDF with `scripts\build_manual.ps1`, which saves `docs/manual/Sanctorum_Manual.pdf`.
+- If a page needs pictures, take screenshots of the real app (`scripts\build_manual.ps1 -Screenshots`, or `-Screenshots -Only name,name` for some). Add a new picture to the `SHOTS` list in `scripts/manualShots.mjs`. The pictures are kept in `docs/manual/images/` as WebP (the script converts them with ffmpeg).
+- When a new feature changes how the app looks or works, update the affected pictures and pages too, and rebuild the PDF.

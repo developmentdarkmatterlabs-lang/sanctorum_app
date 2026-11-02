@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 24">
+  <!-- A divider: steel rules, amber ticks and a lit portal. -->
+  <defs>
+    <radialGradient id="g">
+      <stop offset="0" stop-color="#57c7ff" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#57c7ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a4352" stroke-width="1">
+    <path d="M10 12 H178"/>
+    <path d="M222 12 H390"/>
+  </g>
+  <g stroke="#f0a832" stroke-width="1.2" stroke-linecap="round">
+    <path d="M152 9 V15 M162 8 V16 M172 7 V17 M228 7 V17 M238 8 V16 M248 9 V15"/>
+  </g>
+  <circle cx="200" cy="12" r="11.5" fill="url(#g)"/>
+  <circle cx="200" cy="12" r="6.2" fill="#0b0d10" stroke="#3a4352" stroke-width="1"/>
+  <circle cx="200" cy="12" r="4.2" fill="none" stroke="#57c7ff" stroke-width="1"/>
+  <g fill="none" stroke="#9fe0ff" stroke-width=".8" stroke-linecap="round">
+    <path d="M200 8.8 A3.2 3.2 0 0 1 203.2 12"/>
+    <path d="M200 15.2 A3.2 3.2 0 0 1 196.8 12"/>
+  </g>
+  <circle cx="200" cy="12" r="1.2" fill="#d8f4ff"/>
+</svg>
